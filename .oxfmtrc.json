@@ -6,13 +6,5 @@
   "semi": false,
   "singleQuote": true,
   "trailingComma": "all",
-  "ignorePatterns": [
-    "dist/**",
-    "node_modules/**",
-    ".github/**",
-    "spec/**",
-    "lib/**",
-    "docs/**",
-    "test/**"
-  ]
+  "ignorePatterns": ["dist/**", "node_modules/**", ".github/**", "spec/**", "docs/**"]
 }

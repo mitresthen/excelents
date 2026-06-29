@@ -13,5 +13,5 @@
       "rules": { "import/no-default-export": "off" }
     }
   ],
-  "ignorePatterns": ["dist", "node_modules", "test/fixtures", "lib", "spec", "test"]
+  "ignorePatterns": ["dist", "node_modules", "spec"]
 }
