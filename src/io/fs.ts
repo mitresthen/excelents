@@ -12,21 +12,23 @@ export interface FileSystemAdapter {
 export function createMemoryFileSystem(
   initial: Record<string, Uint8Array> = {},
 ): FileSystemAdapter {
-  const files = new Map<string, Uint8Array>(Object.entries(initial))
+  const files = new Map<string, Uint8Array>(
+    Object.entries(initial).map(([k, v]) => [k, new Uint8Array(v)]),
+  )
   return {
     readFile(path: string): Promise<Uint8Array> {
       const data = files.get(path)
       if (data === undefined) return Promise.reject(new Error(`No such file: ${path}`))
-      return Promise.resolve(data)
+      return Promise.resolve(new Uint8Array(data))
     },
     writeFile(path: string, data: Uint8Array): Promise<void> {
-      files.set(path, data)
+      files.set(path, new Uint8Array(data))
       return Promise.resolve()
     },
     createReadable(path: string): ReadableStream<Uint8Array> {
       const data = files.get(path)
       if (data === undefined) throw new Error(`No such file: ${path}`)
-      return bytesToReadable(data)
+      return bytesToReadable(new Uint8Array(data))
     },
     createWritable(path: string): WritableStream<Uint8Array> {
       const chunks: Uint8Array[] = []
