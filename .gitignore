@@ -72,3 +72,5 @@ dist/
 node_modules/
 *.tsbuildinfo
 .vitest/
+# SDD scratch workspace (task briefs, reports, review packages, ledger)
+.superpowers/
