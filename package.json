@@ -15,7 +15,7 @@
     "README.md"
   ],
   "scripts": {
-    "build": "tsdown",
+    "build": "tsdown && node scripts/fix-exports.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "oxlint --type-aware",
     "lint:fix": "oxlint --type-aware --fix",
@@ -40,19 +40,37 @@
   },
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
-  "types": "./dist/index.d.cts",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": {
+        "types": "./dist/index.d.ts",
+        "default": "./dist/index.js"
+      },
+      "require": {
+        "types": "./dist/index.d.cts",
+        "default": "./dist/index.cjs"
+      }
     },
     "./csv": {
-      "import": "./dist/csv.js",
-      "require": "./dist/csv.cjs"
+      "import": {
+        "types": "./dist/csv.d.ts",
+        "default": "./dist/csv.js"
+      },
+      "require": {
+        "types": "./dist/csv.d.cts",
+        "default": "./dist/csv.cjs"
+      }
     },
     "./node": {
-      "import": "./dist/node.js",
-      "require": "./dist/node.cjs"
+      "import": {
+        "types": "./dist/node.d.ts",
+        "default": "./dist/node.js"
+      },
+      "require": {
+        "types": "./dist/node.d.cts",
+        "default": "./dist/node.cjs"
+      }
     },
     "./package.json": "./package.json"
   }
