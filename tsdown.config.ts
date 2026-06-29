@@ -15,7 +15,7 @@ export default defineConfig({
         if (key === './package.json') continue
         if (value && typeof value === 'object' && !Array.isArray(value)) {
           const newValue: Record<string, unknown> = {}
-          for (const [cond, distPath] of Object.entries(value as Record<string, string>)) {
+          for (const [cond, distPath] of Object.entries(value)) {
             if (cond === 'import' && typeof distPath === 'string') {
               newValue[cond] = {
                 types: distPath.replace(/\.js$/, '.d.ts'),
