@@ -13,14 +13,18 @@ import { fileURLToPath } from 'node:url'
 
 const root = resolve(fileURLToPath(import.meta.url), '..', '..')
 
-// Step 1: pack
+// Step 1: clean up any pre-existing tarballs
+readdirSync(root)
+  .filter((f) => f.startsWith('excelents-') && f.endsWith('.tgz'))
+  .forEach((f) => rmSync(join(root, f), { force: true }))
+
+// Step 2: pack
 console.log('[smoke] packing...')
-const packOutput = execFileSync('pnpm', ['pack'], { cwd: root, encoding: 'utf-8' }).trim()
-const lastLine = packOutput.split('\n').at(-1).trim()
-const tgzName = lastLine.endsWith('.tgz')
-  ? lastLine
-  : readdirSync(root).find((f) => f.startsWith('excelents-') && f.endsWith('.tgz'))
-if (!tgzName) throw new Error('Could not find packed tarball')
+execFileSync('pnpm', ['pack'], { cwd: root, encoding: 'utf-8' })
+
+// Step 3: find the tarball by glob pattern (robust, not dependent on pnpm stdout)
+const tgzName = readdirSync(root).find((f) => f.startsWith('excelents-') && f.endsWith('.tgz'))
+if (!tgzName) throw new Error('pnpm pack did not produce a tarball')
 const tgzPath = join(root, tgzName)
 console.log(`[smoke] tarball: ${tgzName}`)
 
