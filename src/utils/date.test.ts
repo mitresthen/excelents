@@ -30,14 +30,23 @@ test('fractional serials carry the time of day', () => {
 })
 
 test('dateToSerial agrees with the exceljs oracle for modern dates', async () => {
-  const ExcelJS = (await import('exceljs')).default
-  const wb = new ExcelJS.Workbook()
-  const ws = wb.addWorksheet('s')
-  for (const d of [utc(2000, 1, 1), utc(2024, 1, 1), utc(2026, 6, 29)]) {
-    const cell = ws.getCell('A1')
-    cell.value = d
-    // exceljs stores the serial in the cell model when written; compare to ours.
-    const oracleSerial = Math.floor((d.getTime() - Date.UTC(1899, 11, 30)) / 86_400_000)
-    expect(Math.floor(dateToSerial(d))).toBe(oracleSerial)
+  // Import exceljs's own internal date util (uses hardcoded constant 25569, not our epoch formula).
+  // This is a genuine independent oracle: if our EPOCH_1900 is off by even one day the comparison fails.
+  const { createRequire } = await import('module')
+  const req = createRequire(import.meta.url)
+  // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access
+  const excelDateToSerial = (d: Date, date1904: boolean): number =>
+    req('exceljs/lib/utils/utils.js').dateToExcel(d, date1904)
+
+  const modernDates = [utc(2000, 1, 1), utc(2024, 1, 1), utc(2026, 6, 29)]
+
+  // 1900 date system
+  for (const d of modernDates) {
+    expect(dateToSerial(d)).toBe(excelDateToSerial(d, false))
+  }
+
+  // 1904 date system
+  for (const d of modernDates) {
+    expect(dateToSerial(d, { date1904: true })).toBe(excelDateToSerial(d, true))
   }
 })
