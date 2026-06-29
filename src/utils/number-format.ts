@@ -4,8 +4,10 @@
  * all entries below are universal (non-locale) and verified against
  * exceljs `lib/xlsx/defaultnumformats.js` (the authoritative oracle).
  *
- * Corrections vs. the brief's table (exceljs is authoritative for byte-compat):
- *   id 22: 'm/d/yy "h":mm'  (brief had 'm/d/yy h:mm' — missing quotes around h)
+ * Corrections vs. the brief's table:
+ *   id 22: 'm/d/yy h:mm' — canonical ECMA-376 §18.8.30; exceljs has 'm/d/yy "h":mm'
+ *     (quoted-h = literal char) which is a rendering bug. Builtin ids are never written
+ *     as format codes into xlsx files, so there is no interop cost to deviating here.
  *   id 39: '#,##0.00 ;(#,##0.00)'  (brief had no space before semicolon)
  *   id 40: '#,##0.00 ;[Red](#,##0.00)'  (brief had no space before semicolon)
  */
@@ -28,7 +30,7 @@ export const BUILTIN_FORMATS: Readonly<Record<number, string>> = {
   19: 'h:mm:ss AM/PM',
   20: 'h:mm',
   21: 'h:mm:ss',
-  22: 'm/d/yy "h":mm',
+  22: 'm/d/yy h:mm',
   37: '#,##0 ;(#,##0)',
   38: '#,##0 ;[Red](#,##0)',
   39: '#,##0.00 ;(#,##0.00)',

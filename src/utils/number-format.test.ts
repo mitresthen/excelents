@@ -8,6 +8,8 @@ test('known builtin ids map to their canonical codes', () => {
   expect(builtinFormatCode(2)).toBe('0.00')
   expect(builtinFormatCode(9)).toBe('0%')
   expect(builtinFormatCode(49)).toBe('@')
+  // id 22 canonical (exceljs has quoted-h rendering bug; we use ECMA-376 §18.8.30 form)
+  expect(builtinFormatCode(22)).toBe('m/d/yy h:mm')
 })
 
 test('unknown ids return undefined', () => {
@@ -49,6 +51,13 @@ test('the table agrees with the exceljs oracle defaults (real cross-check)', () 
   let checkedCount = 0
   for (const id of excelUniversalIds) {
     if (ourIds.has(id)) {
+      if (id === 22) {
+        // exceljs stores 'm/d/yy "h":mm' (quoted-h = literal). ECMA-376 §18.8.30 canonical
+        // is 'm/d/yy h:mm' (hour token). We intentionally deviate; builtin codes are never
+        // written to files, so there is no interop cost. Excluded from strict equality.
+        checkedCount++
+        continue
+      }
       const entry = excelDefaults[id]
       const excelCode = entry?.f
       if (excelCode === undefined) continue
