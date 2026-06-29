@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { listFixtures, NotImplemented, parseFixture, unzipToParts } from './harness'
+import { diffParts, listFixtures, NotImplemented, parseFixture, unzipToParts } from './harness'
 
 test('finds the carried-over xlsx fixtures', () => {
   const fixtures = listFixtures()
@@ -21,4 +21,8 @@ test('the exceljs oracle loads as a devDependency', async () => {
 
 test('zip/xml-dependent harness fns throw NotImplemented until SP-1', () => {
   expect(() => unzipToParts(new Uint8Array([0]))).toThrow(NotImplemented)
+})
+
+test('diffParts throws NotImplemented until SP-1', () => {
+  expect(() => diffParts({}, {})).toThrow(NotImplemented)
 })

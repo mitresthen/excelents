@@ -9,10 +9,12 @@
  *
  * This script is invoked as part of the `build` npm script, AFTER `tsdown`,
  * so tsdown's overwrite is fixed before the package is used.
+ *
+ * Workaround for tsdown@0.22.3 limitation — remove when fixed upstream.
  */
-import { readFileSync, writeFileSync } from 'fs'
-import { dirname, join } from 'path'
-import { fileURLToPath } from 'url'
+import { readFileSync, writeFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
 const root = dirname(dirname(fileURLToPath(import.meta.url)))
 const pkgPath = join(root, 'package.json')

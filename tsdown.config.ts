@@ -10,6 +10,7 @@ export default defineConfig({
   exports: {
     // Add per-condition `types` entries so every subpath resolves declarations
     // correctly under moduleResolution: node16 AND bundler, for both ESM and CJS.
+    // Workaround for tsdown@0.22.3 limitation — remove when fixed upstream.
     customExports(exports) {
       for (const [key, value] of Object.entries(exports)) {
         if (key === './package.json') continue
