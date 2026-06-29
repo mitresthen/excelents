@@ -5,7 +5,8 @@
   "rules": {
     "typescript/no-floating-promises": "error",
     "typescript/no-explicit-any": "error",
-    "import/no-default-export": "error"
+    "import/no-default-export": "error",
+    "no-await-in-loop": "off"
   },
   "overrides": [
     {
