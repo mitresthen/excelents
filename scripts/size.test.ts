@@ -18,3 +18,11 @@ test('checkBudgets passes when under budget', () => {
   expect(result.ok).toBe(true)
   expect(result.violations).toEqual([])
 })
+
+test('checkBudgets flags entries missing from dist', () => {
+  const result = checkBudgets({}, { 'index.js': 1024 })
+  expect(result.ok).toBe(false)
+  expect(result.violations).toEqual([
+    { entry: 'index.js', size: null, budget: 1024, reason: 'missing' },
+  ])
+})
