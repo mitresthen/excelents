@@ -7,7 +7,7 @@ export default defineConfig({
         test: {
           name: 'node',
           environment: 'node',
-          include: ['src/**/*.test.ts', 'test/**/*.test.ts'],
+          include: ['src/**/*.test.ts', 'test/**/*.test.ts', 'scripts/**/*.test.ts'],
           exclude: ['test/browser/**'],
         },
       },
