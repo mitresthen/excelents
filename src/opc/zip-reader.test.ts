@@ -13,5 +13,5 @@ test('reads a real xlsx fixture and finds the core OPC parts', async () => {
   expect(parts.has('[Content_Types].xml')).toBe(true)
   expect(parts.has('xl/workbook.xml')).toBe(true)
   // the workbook part is real XML
-  expect(new TextDecoder().decode(parts.get('xl/workbook.xml')!)).toContain('<workbook')
+  expect(new TextDecoder().decode(parts.get('xl/workbook.xml'))).toContain('<workbook')
 })
