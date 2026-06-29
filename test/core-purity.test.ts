@@ -1,35 +1,31 @@
-/**
- * Enforces the "web-standard-core" invariant:
- * `src/index.ts` and `src/csv.ts` must not import any `node:` builtins.
- *
- * `src/node.ts` is explicitly allowed — it is the Node-only adapter.
- */
-import { readFileSync } from 'node:fs'
-import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
-import { describe, expect, test } from 'vitest'
+import { readFileSync, readdirSync } from 'node:fs'
+import { join } from 'node:path'
+import { expect, test } from 'vitest'
 
-const root = join(dirname(fileURLToPath(import.meta.url)), '..')
+const SRC = new URL('../src/', import.meta.url).pathname
 
-function readSrc(file: string): string {
-  return readFileSync(join(root, 'src', file), 'utf-8')
+function tsFiles(dir: string): string[] {
+  const out: string[] = []
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name)
+    if (entry.isDirectory()) out.push(...tsFiles(full))
+    else if (entry.name.endsWith('.ts') && !entry.name.endsWith('.test.ts')) out.push(full)
+  }
+  return out
 }
 
-const NODE_IMPORT_RE = /(['"])node:/
-
-describe('core-purity: no node: imports in universal core', () => {
-  test('src/index.ts has no node: imports', () => {
-    const src = readSrc('index.ts')
-    expect(NODE_IMPORT_RE.test(src)).toBe(false)
-  })
-
-  test('src/csv.ts has no node: imports', () => {
-    const src = readSrc('csv.ts')
-    expect(NODE_IMPORT_RE.test(src)).toBe(false)
-  })
-
-  test('src/node.ts IS allowed to use node: imports (sanity check)', () => {
-    const src = readSrc('node.ts')
-    expect(NODE_IMPORT_RE.test(src)).toBe(true)
-  })
+test('core src (except src/node.ts) imports no node: builtin', () => {
+  const offenders: string[] = []
+  for (const file of tsFiles(SRC)) {
+    if (file.endsWith('/node.ts')) continue
+    const src = readFileSync(file, 'utf8')
+    if (
+      /from\s+['"]node:/.test(src) ||
+      /import\s+['"]node:/.test(src) ||
+      /require\(['"]node:/.test(src)
+    ) {
+      offenders.push(file)
+    }
+  }
+  expect(offenders).toEqual([])
 })
