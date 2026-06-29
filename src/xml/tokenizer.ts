@@ -33,8 +33,8 @@ export function* tokenize(xml: string): Generator<XmlToken, void, unknown> {
       i = end === -1 ? n : end + 3
     } else if (xml.startsWith('</', i)) {
       const end = xml.indexOf('>', i + 2)
-      yield { type: 'close', name: xml.slice(i + 2, end).trim() }
-      i = end + 1
+      yield { type: 'close', name: xml.slice(i + 2, end === -1 ? n : end).trim() }
+      i = end === -1 ? n : end + 1
     } else {
       i += 1
       let j = i
@@ -45,6 +45,7 @@ export function* tokenize(xml: string): Generator<XmlToken, void, unknown> {
       for (;;) {
         while (i < n && isSpace(xml[i]!)) i++
         if (i >= n) break
+        const loopStart = i
         if (xml[i] === '/' && xml[i + 1] === '>') {
           i += 2
           yield { type: 'open', name, attributes, selfClosing: true }
@@ -73,6 +74,7 @@ export function* tokenize(xml: string): Generator<XmlToken, void, unknown> {
         } else {
           attributes[attrName] = ''
         }
+        if (i === loopStart) break
       }
     }
   }

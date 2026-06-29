@@ -68,3 +68,23 @@ test('parses self-closing tag with attribute adjacent to />', () => {
     { type: 'open', name: 'c', attributes: { s: '0' }, selfClosing: true },
   ])
 })
+
+// Termination tests — these would hang (vitest timeout) before the malformed-input fixes.
+
+test('terminates on unterminated close tag (no closing >)', () => {
+  expect([...tokenize('</unterminated')]).toBeInstanceOf(Array)
+})
+
+test('terminates on stray slash in attributes (<a /x>)', () => {
+  expect(() => [...tokenize('<a /x>')]).not.toThrow()
+})
+
+test('terminates on unterminated attribute value', () => {
+  expect([...tokenize('<a unterminated="')]).toBeInstanceOf(Array)
+})
+
+test('empty attribute value still parses correctly (regression guard)', () => {
+  expect(toks('<a b="" c="x"/>')).toEqual([
+    { type: 'open', name: 'a', attributes: { b: '', c: 'x' }, selfClosing: true },
+  ])
+})
