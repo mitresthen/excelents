@@ -55,6 +55,7 @@
     "format:fix": "oxfmt .",
     "test": "vitest run",
     "size": "node scripts/size.mjs",
+    "smoke": "node scripts/smoke.mjs",
     "prepublishOnly": "pnpm build"
   },
   "devDependencies": {
