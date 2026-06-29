@@ -5,9 +5,15 @@
   "type": "module",
   "license": "MIT",
   "sideEffects": false,
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "packageManager": "pnpm@11.9.0",
-  "files": ["dist", "LICENSE", "README.md"],
+  "files": [
+    "dist",
+    "LICENSE",
+    "README.md"
+  ],
   "scripts": {
     "build": "tsdown",
     "typecheck": "tsc --noEmit -p tsconfig.json",
@@ -31,5 +37,23 @@
     "tsdown": "0.22.3",
     "typescript": "7.0.1-rc",
     "vitest": "4.1.9"
+  },
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.cts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./csv": {
+      "import": "./dist/csv.js",
+      "require": "./dist/csv.cjs"
+    },
+    "./node": {
+      "import": "./dist/node.js",
+      "require": "./dist/node.cjs"
+    },
+    "./package.json": "./package.json"
   }
 }
