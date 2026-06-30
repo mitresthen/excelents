@@ -1,2 +1,3 @@
-/** CSV entry placeholder; implemented in SP-6. */
-export const csvPlaceholder: true = true
+export { readCsv } from './csv/reader'
+export { writeCsv } from './csv/writer'
+export type { CsvReadOptions, CsvWriteOptions } from './csv/options'
