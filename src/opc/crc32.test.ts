@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { crc32 } from './crc32'
+import { crc32, crc32Final, crc32Init, crc32Update } from './crc32'
 
 const enc = (s: string): Uint8Array => new TextEncoder().encode(s)
 
@@ -18,4 +18,17 @@ test('crc32 returns an unsigned 32-bit value', () => {
   expect(c).toBeGreaterThanOrEqual(0)
   expect(c).toBeLessThanOrEqual(0xffffffff)
   expect(Number.isInteger(c)).toBe(true)
+})
+
+test('incremental crc32 over chunks equals the one-shot crc', () => {
+  const full = enc('The quick brown fox jumps over the lazy dog')
+  let state = crc32Init()
+  state = crc32Update(state, full.subarray(0, 5))
+  state = crc32Update(state, full.subarray(5, 20))
+  state = crc32Update(state, full.subarray(20))
+  expect(crc32Final(state)).toBe(crc32(full))
+})
+
+test('incremental crc32 with no chunks equals crc of empty input', () => {
+  expect(crc32Final(crc32Init())).toBe(crc32(new Uint8Array(0)))
 })
