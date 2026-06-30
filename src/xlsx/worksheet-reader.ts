@@ -1,4 +1,5 @@
 import type { CellValue, FormulaValue } from '../model/cell'
+import type { DataValidation } from '../model/data-validation'
 import type { CellStyle } from '../model/style'
 import type { Worksheet } from '../model/worksheet'
 import { serialToDate } from '../utils/date'
@@ -11,6 +12,60 @@ export interface ReadContext {
   readonly cellStyles: CellStyle[]
   /** rId -> external hyperlink URL, from the worksheet's own relationships part. */
   readonly hyperlinkTargets: Map<string, string>
+}
+
+/** Narrow a raw dataValidation type attribute to the model union (no cast). */
+function asDvType(s: string | undefined): DataValidation['type'] | undefined {
+  switch (s) {
+    case 'list':
+    case 'whole':
+    case 'decimal':
+    case 'textLength':
+    case 'date':
+      return s
+    default:
+      return undefined
+  }
+}
+
+/** Narrow a raw dataValidation operator attribute to the model union (no cast). */
+function asDvOperator(s: string | undefined): NonNullable<DataValidation['operator']> | undefined {
+  switch (s) {
+    case 'between':
+    case 'notBetween':
+    case 'equal':
+    case 'notEqual':
+    case 'greaterThan':
+    case 'lessThan':
+    case 'greaterThanOrEqual':
+    case 'lessThanOrEqual':
+      return s
+    default:
+      return undefined
+  }
+}
+
+/** Assemble a DataValidation from parsed attributes + formula text, or undefined if invalid. */
+function buildDataValidation(
+  attrs: Record<string, string>,
+  formula1: string | undefined,
+  formula2: string | undefined,
+): DataValidation | undefined {
+  const type = asDvType(attrs['type'])
+  const sqref = attrs['sqref']
+  if (type === undefined || sqref === undefined || formula1 === undefined) return undefined
+  const operator = asDvOperator(attrs['operator'])
+  return {
+    sqref,
+    type,
+    formula1,
+    ...(operator !== undefined ? { operator } : {}),
+    ...(formula2 !== undefined ? { formula2 } : {}),
+    ...(attrs['allowBlank'] === '1' ? { allowBlank: true } : {}),
+    // OOXML showDropDown="1" HIDES the dropdown -> model showDropDown:false.
+    ...(attrs['showDropDown'] === '1' ? { showDropDown: false } : {}),
+    ...(attrs['showErrorMessage'] === '1' ? { showErrorMessage: true } : {}),
+  }
 }
 
 function sharedToValue(v: SharedStringValue | undefined): CellValue {
@@ -32,6 +87,13 @@ export function readWorksheetInto(ws: Worksheet, xml: string, ctx: ReadContext):
   let inIs = false
   let inT = false
   const pendingHyperlinks: Array<{ ref: string; rid: string }> = []
+
+  const parsedValidations: DataValidation[] = []
+  let dvAttrs: Record<string, string> | undefined
+  let dvF1: string | undefined
+  let dvF2: string | undefined
+  let inDvF1 = false
+  let inDvF2 = false
 
   const finalize = (): void => {
     if (ref === undefined) return
@@ -104,13 +166,31 @@ export function readWorksheetInto(ws: Worksheet, xml: string, ctx: ReadContext):
         const hr = tok.attributes['ref']
         const rid = tok.attributes['r:id']
         if (hr !== undefined && rid !== undefined) pendingHyperlinks.push({ ref: hr, rid })
-      }
+      } else if (tok.name === 'dataValidation') {
+        dvAttrs = tok.attributes
+        dvF1 = undefined
+        dvF2 = undefined
+        if (tok.selfClosing) {
+          const dv = buildDataValidation(dvAttrs, dvF1, dvF2)
+          if (dv !== undefined) parsedValidations.push(dv)
+          dvAttrs = undefined
+        }
+      } else if (tok.name === 'formula1') inDvF1 = !tok.selfClosing
+      else if (tok.name === 'formula2') inDvF2 = !tok.selfClosing
     } else if (tok.type === 'close') {
       if (tok.name === 'v') isV = false
       else if (tok.name === 'f') inF = false
       else if (tok.name === 'is') inIs = false
       else if (tok.name === 't') inT = false
-      else if (tok.name === 'c') {
+      else if (tok.name === 'formula1') inDvF1 = false
+      else if (tok.name === 'formula2') inDvF2 = false
+      else if (tok.name === 'dataValidation') {
+        if (dvAttrs !== undefined) {
+          const dv = buildDataValidation(dvAttrs, dvF1, dvF2)
+          if (dv !== undefined) parsedValidations.push(dv)
+        }
+        dvAttrs = undefined
+      } else if (tok.name === 'c') {
         finalize()
         ref = undefined
       }
@@ -118,9 +198,12 @@ export function readWorksheetInto(ws: Worksheet, xml: string, ctx: ReadContext):
       if (isV) v = (v ?? '') + tok.value
       else if (inF) f = (f ?? '') + tok.value
       else if (inIs && inT) inlineText = (inlineText ?? '') + tok.value
+      else if (inDvF1) dvF1 = (dvF1 ?? '') + tok.value
+      else if (inDvF2) dvF2 = (dvF2 ?? '') + tok.value
     }
   }
   finalize()
+  for (const dv of parsedValidations) ws.addDataValidation(dv)
 
   // Resolve hyperlinks (declared after sheetData) over the already-populated cells.
   // Only a plain-string cell becomes a { text, hyperlink } value. A cell already holding a

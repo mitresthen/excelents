@@ -166,7 +166,27 @@ export function writeWorksheetXml(
     w.close('mergeCells')
   }
 
-  // hyperlinks follow mergeCells; each references an external relationship by r:id.
+  // dataValidations follow mergeCells and precede hyperlinks (CT_Worksheet sequence).
+  const validations = ws.dataValidations
+  if (validations.length > 0) {
+    w.open('dataValidations', { count: validations.length })
+    for (const dv of validations) {
+      w.open('dataValidation', {
+        type: dv.type,
+        operator: dv.operator,
+        sqref: dv.sqref,
+        allowBlank: dv.allowBlank === true ? 1 : undefined,
+        showDropDown: dv.showDropDown === false ? 1 : undefined, // OOXML inverts this flag
+        showErrorMessage: dv.showErrorMessage === true ? 1 : undefined,
+      })
+      w.open('formula1').text(dv.formula1).close('formula1')
+      if (dv.formula2 !== undefined) w.open('formula2').text(dv.formula2).close('formula2')
+      w.close('dataValidation')
+    }
+    w.close('dataValidations')
+  }
+
+  // hyperlinks follow dataValidations; each references an external relationship by r:id.
   const rels: Array<{ rid: string; target: string }> = []
   if (pending.length > 0) {
     w.open('hyperlinks')

@@ -2,6 +2,7 @@ import { decodeAddress } from '../utils/address'
 import type { RangeBox } from '../utils/range'
 import type { Cell, CellValue } from './cell'
 import { Column } from './column'
+import type { DataValidation } from './data-validation'
 import { Row } from './row'
 
 /** A worksheet: a sparse grid of cells, plus columns, merges, and a name. */
@@ -9,6 +10,7 @@ export class Worksheet {
   private readonly rowsMap = new Map<number, Row>()
   private readonly cols = new Map<number, Column>()
   private readonly mergeRanges: string[] = []
+  private readonly validations: DataValidation[] = []
 
   constructor(public name: string) {}
 
@@ -58,6 +60,14 @@ export class Worksheet {
 
   get merges(): readonly string[] {
     return this.mergeRanges
+  }
+
+  addDataValidation(rule: DataValidation): void {
+    this.validations.push(rule)
+  }
+
+  get dataValidations(): readonly DataValidation[] {
+    return this.validations
   }
 
   /** The highest row number that has been touched (created via getRow/getCell), used to place addRow. */
