@@ -7,6 +7,7 @@ export interface OpcRelationship {
   id: string
   type: string
   target: string
+  targetMode?: string
 }
 
 const CONTENT_TYPES = '[Content_Types].xml'
@@ -87,11 +88,44 @@ export class OpcPackage {
         const type = tok.attributes['Type']
         const target = tok.attributes['Target']
         if (id !== undefined && type !== undefined && target !== undefined) {
-          out.push({ id, type, target })
+          const targetMode = tok.attributes['TargetMode']
+          out.push(
+            targetMode === undefined ? { id, type, target } : { id, type, target, targetMode },
+          )
         }
       }
     }
     return out
+  }
+
+  /** Directory of a part path (`xl/worksheets/sheet1.xml` -> `xl/worksheets`), '' for root. */
+  private static dirOf(partName: string): string {
+    const slash = partName.lastIndexOf('/')
+    return slash === -1 ? '' : partName.slice(0, slash)
+  }
+
+  /** Resolve a relationship Target against a base directory into an absolute part path. */
+  private static resolveTarget(baseDir: string, target: string): string {
+    if (target.startsWith('/')) return target.slice(1) // already package-absolute
+    if (baseDir === '') return target
+    return `${baseDir}/${target}`
+  }
+
+  /**
+   * Relationships declared for a specific part (`<dir>/_rels/<file>.rels`), with internal
+   * targets resolved to absolute part paths. External targets are returned verbatim.
+   */
+  relationshipsFor(partName: string): OpcRelationship[] {
+    const dir = OpcPackage.dirOf(partName)
+    const base = dir === '' ? partName : partName.slice(dir.length + 1)
+    const relsPath = dir === '' ? `_rels/${base}.rels` : `${dir}/_rels/${base}.rels`
+    const bytes = this.parts.get(relsPath)
+    if (bytes === undefined) return []
+    const rels = this.parseRelationships(new TextDecoder().decode(bytes))
+    for (const r of rels) {
+      if (r.targetMode !== 'External') r.target = OpcPackage.resolveTarget(dir, r.target)
+    }
+    return rels
   }
 
   setPart(name: string, contentType: string, data: Uint8Array): void {
