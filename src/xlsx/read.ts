@@ -22,12 +22,22 @@ export async function readXlsx(bytes: Uint8Array): Promise<Workbook> {
     parts.stylesPath !== undefined
       ? readStyles(decode(pkg.getPart(parts.stylesPath))).cellStyles
       : []
-  const ctx = { sharedStrings, cellStyles }
 
   const wb = createWorkbook()
   for (const sheet of parts.sheets) {
     const ws = wb.addSheet(sheet.name)
-    readWorksheetInto(ws, decode(pkg.getPart(sheet.path)), ctx)
+    // Each worksheet's external hyperlink targets live in its own rels part.
+    const hyperlinkTargets = new Map<string, string>()
+    for (const rel of pkg.relationshipsFor(sheet.path)) {
+      if (rel.targetMode === 'External' || rel.type.endsWith('/hyperlink')) {
+        hyperlinkTargets.set(rel.id, rel.target)
+      }
+    }
+    readWorksheetInto(ws, decode(pkg.getPart(sheet.path)), {
+      sharedStrings,
+      cellStyles,
+      hyperlinkTargets,
+    })
   }
   return wb
 }
