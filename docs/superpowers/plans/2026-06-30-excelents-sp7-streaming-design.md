@@ -68,3 +68,28 @@ for await (const { sheet, rowNumber, cells } of readXlsxRows(bytes /* Uint8Array
 4. **Inline strings** for streamed writes (larger files, no shared-string table) — acceptable? (Standard for streaming writers; yes unless you object.)
 
 Once direction is confirmed, this becomes a full bite-sized `writing-plans` plan and follows the same TDD + adversarial-review flow as SP-3..SP-6.
+
+---
+
+## LOCKED DECISIONS (confirmed with the user, 2026-06-30)
+
+1. **Direction:** build streaming next (SP-7), before cutting a release.
+2. **Write API: BOTH forms.**
+   - Functional: `writeXlsxStream(rows: AsyncIterable<RowInput>, opts?): ReadableStream<Uint8Array>`.
+   - Builder: `createXlsxStreamWriter(opts?)` → `{ addRow(row): Promise<void>; addRows(rows): Promise<void>; close(): Promise<void>; readable: ReadableStream<Uint8Array> }`. `addRow` awaits = backpressure. The functional form wraps the builder.
+3. **Read architecture: ONE random-access engine + streamed parse.** `readXlsxRows(source, opts?): AsyncIterable<RowEvent>`. `source: Uint8Array | Blob | ReadableStream<Uint8Array>`; a `ReadableStream` is buffered to bytes first (forward-only is rejected — `sharedStrings` ordering is inconsistent across real files, proven below). Use the central directory to resolve `sharedStrings` regardless of physical order; stream the parse of `sheetData` (yield rows). A `Blob` may later use ranged `.slice()` reads with **no API change**.
+4. **Write strings: INLINE** (`t="inlineStr"`). O(1) string memory preserves streaming's bounded-memory guarantee. Measured cost: ~7% larger *compressed* on highly-repetitive data (deflate absorbs the redundancy), ~0% on unique data. A `useSharedStrings` opt-in may be added later but is out of scope now.
+
+**Research evidence backing 3 & 4 (measured this session):**
+- Entry order is inconsistent: `sharedStrings` is BEFORE worksheets in formulas/huge.xlsx but AFTER in test-issue-877/test-issue-1669.xlsx → forward-only read can't resolve string cells reliably.
+- Real Excel fixtures store compressed sizes in local headers (no data descriptor), but streaming writers (incl. ours) emit data descriptors — so our reader must handle both (the central-dir path does, trivially).
+- Inline vs shared compressed size on 5000 repetitive rows: 55473 vs 51979 bytes (1.07×).
+
+## Task plan (executable)
+
+- **T1 — incremental crc32.** Add `crc32Init()/crc32Update(state,chunk)/crc32Final(state)`; refactor `crc32` to use them. (zip data descriptors need a running crc over streamed, deflated... no — crc is over the UNCOMPRESSED data; compute it on each chunk before deflating.)
+- **T2 — streaming ZIP write primitive** (`src/opc/zip-stream.ts`): `writeZipStream(entries: AsyncIterable<{name; data: AsyncIterable<Uint8Array>}>, codec): ReadableStream<Uint8Array>`. Per entry: local header with GP-bit-3 set (sizes unknown) → deflate chunks through `CompressionStream` → data descriptor (crc + comp/uncomp sizes) → record central-dir entry; emit central directory + EOCD at the end. TDD: output round-trips through the existing `readZip`.
+- **T3 — streaming xlsx writer** (`src/xlsx/stream-writer.ts`): `createXlsxStreamWriter` + `writeXlsxStream`. Drives T2 with a streamed `sheetData` (inline strings, one active sheet) + buffered small parts (workbook/styles/content-types/rels). Styles interned into a small buffered registry, emitted at close. TDD: exceljs reads it; round-trips vs `readXlsx`.
+- **T4 — streaming xlsx reader** (`src/xlsx/stream-reader.ts`): `readXlsxRows`. Buffer source→bytes; read central dir (extend zip-reader to expose entry offsets/ranges); inflate+SAX-parse `sheetData` incrementally; resolve `sharedStrings` (read that entry first). TDD: matches `readXlsx` cell-for-cell on fixtures.
+- **T5 — streaming CSV** (`src/csv/stream.ts`): `writeCsvStream(rows): ReadableStream<Uint8Array>`, `readCsvRows(src): AsyncIterable<Row>`. Reuse SP-6 quoting/inference per row. TDD: round-trip + matches `writeCsv`/`readCsv`.
+- **T6 — `./stream` entry + tree-shake + size + conformance.** Export the streaming surface; verify `dist/stream.js` doesn't pull the buffered `writeXlsx`/`readXlsx`; size budget; whole-unit adversarial review.
