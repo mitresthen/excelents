@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { createWorkbook, writeXlsx } from './index'
+import { createWorkbook, readXlsx, writeXlsx } from './index'
 
 test('the package exposes createWorkbook building a usable workbook', () => {
   const wb = createWorkbook()
@@ -18,4 +18,11 @@ test('the package exposes writeXlsx producing ZIP-magic bytes', async () => {
   expect(bytes[1]).toBe(0x4b)
   expect(bytes[2]).toBe(0x03)
   expect(bytes[3]).toBe(0x04)
+})
+
+test('the package exposes readXlsx round-tripping writeXlsx', async () => {
+  const wb = createWorkbook()
+  wb.addSheet('S').cell('A1').value = 'hello'
+  const restored = await readXlsx(await writeXlsx(wb))
+  expect(restored.sheets[0]?.cell('A1').value).toBe('hello')
 })
