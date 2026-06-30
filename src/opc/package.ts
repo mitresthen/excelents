@@ -100,7 +100,8 @@ export class OpcPackage {
 
   private buildContentTypes(): string {
     const w = new XmlWriter().declaration().open('Types', { xmlns: TYPES_NS })
-    for (const [ext, type] of this.defaults) w.leaf('Default', { Extension: ext, ContentType: type })
+    for (const [ext, type] of this.defaults)
+      w.leaf('Default', { Extension: ext, ContentType: type })
     for (const [part, type] of this.overrides) {
       w.leaf('Override', { PartName: `/${part}`, ContentType: type })
     }

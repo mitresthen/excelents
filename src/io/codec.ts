@@ -14,9 +14,16 @@ async function transform(
   // new Uint8Array(typedArray) always produces Uint8Array<ArrayBuffer> — satisfies BufferSource
   const copy: Uint8Array<ArrayBuffer> = new Uint8Array(data)
   const writer = writable.getWriter()
-  await writer.write(copy)
-  await writer.close()
-  return readableToBytes(readable)
+  // Write and read must run concurrently: writer.close() can deadlock if the
+  // readable side isn't being consumed (backpressure blocks the flush).
+  const [, result] = await Promise.all([
+    (async () => {
+      await writer.write(copy)
+      await writer.close()
+    })(),
+    readableToBytes(readable),
+  ])
+  return result
 }
 
 /** Default codec using the platform Compression Streams API (`deflate-raw`). */

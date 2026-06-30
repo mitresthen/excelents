@@ -6,12 +6,16 @@ const dec = (b: Uint8Array): string => new TextDecoder().decode(b)
 
 test('reads content types and root relationships from a real fixture', async () => {
   const { readFile } = await import('node:fs/promises')
-  const bytes = new Uint8Array(await readFile(new URL('../../test/fixtures/1904.xlsx', import.meta.url)))
+  const bytes = new Uint8Array(
+    await readFile(new URL('../../test/fixtures/1904.xlsx', import.meta.url)),
+  )
   const pkg = await OpcPackage.read(bytes)
   expect(pkg.partNames()).toContain('xl/workbook.xml')
   expect(pkg.contentTypeOf('xl/workbook.xml')).toContain('spreadsheetml')
   // the root rels point at the workbook (type ends with .../officeDocument, not extended-properties)
-  const officeDoc = pkg.rootRelationships().find((r) => r.type.endsWith('relationships/officeDocument'))
+  const officeDoc = pkg
+    .rootRelationships()
+    .find((r) => r.type.endsWith('relationships/officeDocument'))
   expect(officeDoc?.target).toContain('workbook.xml')
 })
 
