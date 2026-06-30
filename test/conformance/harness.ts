@@ -30,7 +30,14 @@ function isXmlPart(name: string): boolean {
   return name.endsWith('.xml') || name.endsWith('.rels')
 }
 
-/** Tokenize, sort each element's attributes, and re-emit compact — a stable canonical form. */
+/**
+ * Tokenize, sort each element's attributes, and re-emit compact — a stable canonical form.
+ *
+ * Whitespace-only text runs (insignificant inter-element formatting, e.g. the indentation
+ * exceljs pretty-prints) are dropped so two producers with different formatting compare equal.
+ * Known limitation: a string whose content is itself only whitespace (`<t xml:space="preserve">
+ *   </t>`) is also dropped — acceptable because both producers drop it identically.
+ */
 export function canonicalizeXml(xml: string): string {
   const w = new XmlWriter()
   for (const tok of tokenize(xml)) {
@@ -41,7 +48,7 @@ export function canonicalizeXml(xml: string): string {
       else w.open(tok.name, sorted)
     } else if (tok.type === 'close') {
       w.close(tok.name)
-    } else {
+    } else if (tok.value.trim() !== '') {
       w.text(tok.value)
     }
   }
@@ -72,4 +79,117 @@ export function diffParts(
     else if (a[name] !== b[name]) diffs.push({ part: name, detail: 'content differs' })
   }
   return diffs
+}
+
+/**
+ * Build the same workbook with both producers, canonicalize their parts, and diff.
+ * `filter` narrows to the parts we own (e.g. `xl/worksheets/*`); incidental parts
+ * exceljs adds (theme, docProps, …) are excluded by default-only when filtered.
+ */
+export async function compareWriteParts(
+  build: (lib: 'oracle' | 'excelents') => Promise<Uint8Array>,
+  filter: (part: string) => boolean = () => true,
+): Promise<{ part: string; detail: string }[]> {
+  const { oracle, excelents } = await withOracle(build)
+  const a = await unzipToParts(oracle)
+  const b = await unzipToParts(excelents)
+  const pick = (m: Record<string, string>): Record<string, string> =>
+    Object.fromEntries(Object.entries(m).filter(([k]) => filter(k)))
+  return diffParts(pick(a), pick(b))
+}
+
+/** Resolve a `sharedStrings.xml` part to its index-ordered plain-text values. */
+function parseSharedStrings(bytes: Uint8Array | undefined): string[] {
+  if (bytes === undefined) return []
+  const xml = new TextDecoder().decode(bytes)
+  const values: string[] = []
+  let current = ''
+  let depth = 0 // inside an <si>
+  let inText = false
+  for (const tok of tokenize(xml)) {
+    if (tok.type === 'open' && tok.name === 'si') {
+      current = ''
+      depth++
+    } else if (tok.type === 'close' && tok.name === 'si') {
+      values.push(current)
+      depth--
+    } else if (tok.type === 'open' && tok.name === 't') {
+      inText = true
+    } else if (tok.type === 'close' && tok.name === 't') {
+      inText = false
+    } else if (tok.type === 'text' && inText && depth > 0) {
+      current += tok.value
+    }
+  }
+  return values
+}
+
+/** A semantically-resolved cell: its type tag and value (shared strings already dereferenced). */
+export interface ResolvedCell {
+  t: string
+  v: string
+  f?: string
+}
+
+/** The semantic content of a worksheet: resolved cells by ref, plus merge ranges. */
+export interface SheetContent {
+  cells: Record<string, ResolvedCell>
+  merges: string[]
+}
+
+/**
+ * Extract a worksheet's semantic content (resolved cell values + merges) from xlsx bytes,
+ * independent of each producer's incidental XML structure or shared-string index ordering.
+ */
+export async function extractSheetContent(
+  bytes: Uint8Array,
+  sheetPath = 'xl/worksheets/sheet1.xml',
+): Promise<SheetContent> {
+  const entries = new Map(await readZip(bytes))
+  const sst = parseSharedStrings(entries.get('xl/sharedStrings.xml'))
+  const wsBytes = entries.get(sheetPath)
+  if (wsBytes === undefined) throw new Error(`worksheet part not found: ${sheetPath}`)
+  const xml = new TextDecoder().decode(wsBytes)
+
+  const cells: Record<string, ResolvedCell> = {}
+  const merges: string[] = []
+  let ref: string | undefined
+  let type = 'n'
+  let v: string | undefined
+  let f: string | undefined
+  let inV = false
+  let inF = false
+
+  const finalize = (): void => {
+    if (ref === undefined) return
+    if (v === undefined && f === undefined) return // empty cell
+    const resolved = type === 's' && v !== undefined ? (sst[Number(v)] ?? '') : (v ?? '')
+    cells[ref] = f !== undefined ? { t: type, v: resolved, f } : { t: type, v: resolved }
+  }
+
+  for (const tok of tokenize(xml)) {
+    if (tok.type === 'open' || tok.type === 'close') {
+      if (tok.name === 'c' && tok.type === 'open') {
+        finalize()
+        ref = tok.attributes.r
+        type = tok.attributes.t ?? 'n'
+        v = undefined
+        f = undefined
+        if (tok.selfClosing) {
+          ref = undefined // empty self-closed cell
+        }
+      } else if (tok.name === 'v') {
+        inV = tok.type === 'open'
+      } else if (tok.name === 'f') {
+        inF = tok.type === 'open'
+      } else if (tok.name === 'mergeCell' && tok.type === 'open') {
+        if (tok.attributes.ref !== undefined) merges.push(tok.attributes.ref)
+      }
+    } else if (tok.type === 'text') {
+      if (inV) v = (v ?? '') + tok.value
+      else if (inF) f = (f ?? '') + tok.value
+    }
+  }
+  finalize()
+  return { cells, merges: merges.sort() }
 }

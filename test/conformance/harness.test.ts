@@ -1,5 +1,18 @@
 import { expect, test } from 'vitest'
-import { listFixtures, parseFixture, withOracle } from './harness'
+import { canonicalizeXml, listFixtures, parseFixture, withOracle } from './harness'
+
+test('canonicalizeXml drops whitespace-only text runs between elements', () => {
+  const pretty = '<root>\n  <a/>\n  <b/>\n</root>'
+  const compact = '<root><a/><b/></root>'
+  // A pretty-printed producer and a compact one must canonicalize identically.
+  expect(canonicalizeXml(pretty)).toBe(canonicalizeXml(compact))
+})
+
+test('canonicalizeXml preserves text runs that contain non-whitespace content', () => {
+  expect(canonicalizeXml('<t>hello</t>')).toContain('hello')
+  // Content with internal whitespace is kept verbatim.
+  expect(canonicalizeXml('<t>a b</t>')).toContain('a b')
+})
 
 test('finds the carried-over xlsx fixtures', () => {
   const fixtures = listFixtures()

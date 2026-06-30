@@ -1,4 +1,5 @@
 export { createWorkbook, Workbook } from './model/workbook'
+export { writeXlsx } from './xlsx/write'
 export { Worksheet } from './model/worksheet'
 export { Row } from './model/row'
 export { Column } from './model/column'
