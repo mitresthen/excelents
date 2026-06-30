@@ -6,17 +6,17 @@ import { Row } from './row'
 
 /** A worksheet: a sparse grid of cells, plus columns, merges, and a name. */
 export class Worksheet {
-  private readonly rows = new Map<number, Row>()
+  private readonly rowsMap = new Map<number, Row>()
   private readonly cols = new Map<number, Column>()
   private readonly mergeRanges: string[] = []
 
   constructor(public name: string) {}
 
   getRow(n: number): Row {
-    let row = this.rows.get(n)
+    let row = this.rowsMap.get(n)
     if (row === undefined) {
       row = new Row(n)
-      this.rows.set(n, row)
+      this.rowsMap.set(n, row)
     }
     return row
   }
@@ -58,10 +58,18 @@ export class Worksheet {
   /** The highest row number that has been touched (created via getRow/getCell), used to place addRow. */
   get rowCount(): number {
     let max = 0
-    for (const n of this.rows.keys()) {
+    for (const n of this.rowsMap.keys()) {
       if (n > max) max = n
     }
     return max
+  }
+
+  /** Populated rows (at least one cell) in ascending order. */
+  get rows(): readonly Row[] {
+    return [...this.rowsMap.keys()]
+      .sort((a, b) => a - b)
+      .map((n) => this.rowsMap.get(n)!)
+      .filter((row) => row.cells.length > 0)
   }
 
   get dimensions(): RangeBox | undefined {
@@ -70,7 +78,7 @@ export class Worksheet {
     let bottom = -Infinity
     let right = -Infinity
     let any = false
-    for (const row of this.rows.values()) {
+    for (const row of this.rowsMap.values()) {
       for (const cell of row.cells) {
         any = true
         if (cell.row < top) top = cell.row

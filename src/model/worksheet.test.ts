@@ -34,3 +34,11 @@ test('dimensions spans the populated cells', () => {
 test('dimensions is undefined when empty', () => {
   expect(new Worksheet('s').dimensions).toBeUndefined()
 })
+
+test('rows lists only populated rows ascending', () => {
+  const ws = new Worksheet('s')
+  ws.cell('A3').value = 'c'
+  ws.cell('A1').value = 'a'
+  ws.getRow(2) // touched but empty — excluded
+  expect(ws.rows.map((r) => r.number)).toEqual([1, 3])
+})
