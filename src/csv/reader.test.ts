@@ -38,3 +38,18 @@ test('does not emit a spurious empty row for a trailing newline', () => {
   const ws = readCsv('a\nb\n').sheets[0]!
   expect(ws.dimensions).toEqual({ top: 1, left: 1, bottom: 2, right: 1 })
 })
+
+test("'NaN' / 'Infinity' stay strings (the writer cannot reproduce non-finite numbers)", () => {
+  // String(Number(s))===s is true for these, but renderValue emits '' for non-finite, so
+  // inferring them as numbers would lose the value on the next write.
+  expect(readCsv('NaN').sheets[0]!.cell('A1').value).toBe('NaN')
+  expect(readCsv('Infinity').sheets[0]!.cell('A1').value).toBe('Infinity')
+  expect(readCsv('-Infinity').sheets[0]!.cell('A1').value).toBe('-Infinity')
+})
+
+test('bare CR (old-Mac) line endings split rows', () => {
+  const ws = readCsv('a\rb\rc').sheets[0]!
+  expect(ws.cell('A1').value).toBe('a')
+  expect(ws.cell('A2').value).toBe('b')
+  expect(ws.cell('A3').value).toBe('c')
+})

@@ -40,6 +40,10 @@ function quoteField(field: string, delimiter: string, quoteAll: boolean): string
 /**
  * Serialize a worksheet (or a workbook's chosen sheet) to an RFC 4180 CSV string.
  * The grid spans `(1,1)` to the sheet's `(bottom, right)` dimension; absent cells are empty.
+ *
+ * Values are emitted verbatim — fields beginning with `=`, `+`, `-`, or `@` are NOT escaped
+ * (this matches exceljs). If the CSV may be opened by a spreadsheet app and could contain
+ * untrusted input, the caller is responsible for formula-injection sanitization.
  */
 export function writeCsv(source: Workbook | Worksheet, options: CsvWriteOptions = {}): string {
   const { delimiter = ',', rowDelimiter = '\n', quoteAll = false, bom = false } = options

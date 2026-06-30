@@ -2,7 +2,13 @@ import type { CellValue } from '../model/cell'
 import { createWorkbook, type Workbook } from '../model/workbook'
 import type { CsvReadOptions } from './options'
 
-/** Split CSV text into rows of raw string fields (RFC 4180). */
+/**
+ * Split CSV text into rows of raw string fields (RFC 4180).
+ *
+ * Parsing is lenient: an unterminated quoted field absorbs to end-of-text, and characters
+ * after a field's closing quote but before the delimiter are appended (`"a"b` → `ab`) rather
+ * than throwing. This favors recovering data from slightly-malformed input over strictness.
+ */
 function parseRows(text: string, delimiter: string): string[][] {
   const rows: string[][] = []
   let field = ''
@@ -29,10 +35,13 @@ function parseRows(text: string, delimiter: string): string[][] {
       continue
     }
     if (ch === '"' && field === '') inQuotes = true
-    else if (ch === delimiter) pushField()
-    else if (ch === '\n') pushRow()
+    else if (delimiter.length === 1 ? ch === delimiter : text.startsWith(delimiter, i)) {
+      pushField()
+      i += delimiter.length - 1 // no-op for a single-char delimiter
+    } else if (ch === '\n') pushRow()
     else if (ch === '\r') {
-      // swallow; the following \n (or end of text) terminates the row
+      // \r\n: swallow here, the \n ends the row. Bare \r (old-Mac) ends the row itself.
+      if (text[i + 1] !== '\n') pushRow()
     } else field += ch
   }
   // Flush a trailing partial row, but not a spurious empty one from a final newline.
@@ -44,7 +53,11 @@ function parseRows(text: string, delimiter: string): string[][] {
 function infer(s: string, parseNumbers: boolean, parseBooleans: boolean): CellValue {
   if (s === '') return null
   // String(Number(s)) === s keeps leading-zero ('00210') and date-like strings as strings.
-  if (parseNumbers && s.trim() !== '' && String(Number(s)) === s) return Number(s)
+  // Number.isFinite rejects 'NaN'/'Infinity'/'-Infinity' (which pass the round-trip test but
+  // the writer cannot reproduce — it emits '' for non-finite numbers), so they stay strings.
+  if (parseNumbers && s.trim() !== '' && Number.isFinite(Number(s)) && String(Number(s)) === s) {
+    return Number(s)
+  }
   if (parseBooleans && (s === 'true' || s === 'false')) return s === 'true'
   return s
 }

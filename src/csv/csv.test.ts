@@ -19,6 +19,17 @@ test('writeCsv -> readCsv round-trips values with conservative inference', () =>
   expect(r.cell('B2').value).toBe('00210')
 })
 
+test('a multi-character delimiter round-trips', () => {
+  const wb = createWorkbook()
+  const ws = wb.addSheet('S')
+  ws.cell('A1').value = 'a'
+  ws.cell('B1').value = 'b|c' // a single '|' must not be treated as the '||' delimiter
+  const out = writeCsv(wb, { delimiter: '||' })
+  const r = readCsv(out, { delimiter: '||' }).sheets[0]!
+  expect(r.cell('A1').value).toBe('a')
+  expect(r.cell('B1').value).toBe('b|c')
+})
+
 test('exceljs reads our CSV; we read exceljs CSV (cross-conformance)', async () => {
   const wb = createWorkbook()
   const ws = wb.addSheet('S')
