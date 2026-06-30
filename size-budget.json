@@ -1,5 +1,6 @@
 {
   "index.js": 18432,
   "csv.js": 2048,
-  "node.js": 2048
+  "node.js": 2048,
+  "stream.js": 8192
 }

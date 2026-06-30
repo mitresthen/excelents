@@ -44,6 +44,16 @@
         "default": "./dist/node.cjs"
       }
     },
+    "./stream": {
+      "import": {
+        "types": "./dist/stream.d.ts",
+        "default": "./dist/stream.js"
+      },
+      "require": {
+        "types": "./dist/stream.d.cts",
+        "default": "./dist/stream.cjs"
+      }
+    },
     "./package.json": "./package.json"
   },
   "scripts": {
