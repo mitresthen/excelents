@@ -104,20 +104,20 @@ function parseSharedStrings(bytes: Uint8Array | undefined): string[] {
   const xml = new TextDecoder().decode(bytes)
   const values: string[] = []
   let current = ''
-  let depth = 0 // inside an <si>
+  let inSi = false // <si> does not nest in OOXML, so a boolean suffices
   let inText = false
   for (const tok of tokenize(xml)) {
     if (tok.type === 'open' && tok.name === 'si') {
       current = ''
-      depth++
+      inSi = true
     } else if (tok.type === 'close' && tok.name === 'si') {
       values.push(current)
-      depth--
+      inSi = false
     } else if (tok.type === 'open' && tok.name === 't') {
       inText = true
     } else if (tok.type === 'close' && tok.name === 't') {
       inText = false
-    } else if (tok.type === 'text' && inText && depth > 0) {
+    } else if (tok.type === 'text' && inText && inSi) {
       current += tok.value
     }
   }
@@ -140,6 +140,11 @@ export interface SheetContent {
 /**
  * Extract a worksheet's semantic content (resolved cell values + merges) from xlsx bytes,
  * independent of each producer's incidental XML structure or shared-string index ordering.
+ *
+ * Limitation: only `<v>`-bearing cells are read. Inline strings (`t="inlineStr"` with
+ * `<is><t>…`) carry no `<v>` and are skipped — exceljs defaults to shared strings, so this
+ * does not arise in the conformance suite, but a producer emitting inline strings would
+ * appear to have missing cells here.
  */
 export async function extractSheetContent(
   bytes: Uint8Array,
@@ -175,6 +180,9 @@ export async function extractSheetContent(
         type = tok.attributes.t ?? 'n'
         v = undefined
         f = undefined
+        // Reset accumulator flags defensively in case a prior cell's </v>/</f> was malformed.
+        inV = false
+        inF = false
         if (tok.selfClosing) {
           ref = undefined // empty self-closed cell
         }
