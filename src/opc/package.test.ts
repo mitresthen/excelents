@@ -25,6 +25,15 @@ test('builds a package and round-trips through read', async () => {
   expect(dec(pkg.getPart('xl/workbook.xml')!)).toBe('<workbook/>')
 })
 
+test('getPart returns a defensive copy: mutating the result does not affect subsequent calls', () => {
+  const pkg = OpcPackage.empty()
+  pkg.setPart('xl/workbook.xml', 'application/test+xml', enc('<workbook/>'))
+  const first = pkg.getPart('xl/workbook.xml')!
+  first[0] = 0xff // mutate the returned buffer
+  const second = pkg.getPart('xl/workbook.xml')!
+  expect(second[0]).not.toBe(0xff)
+})
+
 async function buildMinimal(): Promise<Uint8Array> {
   // Construct a minimal package via setPart + toBytes, then return its bytes.
   const { OpcPackage: P } = await import('./package')

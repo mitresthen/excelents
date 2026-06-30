@@ -6,6 +6,7 @@ export default defineConfig({
   platform: 'neutral',
   target: 'node20',
   dts: true,
+  deps: { neverBundle: [/^node:/] },
   tsconfig: './tsconfig.build.json',
   exports: {
     // Add per-condition `types` entries so every subpath resolves declarations

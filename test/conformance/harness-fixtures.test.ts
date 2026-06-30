@@ -26,6 +26,17 @@ test('unzipToParts canonicalizes every xlsx fixture and finds [Content_Types].xm
 test('diffParts reports no differences for identical part maps and flags real ones', async () => {
   const parts = await unzipToParts(await parseFixture(listFixtures()[0]!))
   expect(diffParts(parts, parts)).toEqual([])
-  const mutated = { ...parts, 'extra.xml': '<x/>' }
-  expect(diffParts(parts, mutated).length).toBeGreaterThan(0)
+
+  // "missing on left": key present in right but not left
+  const missingLeft = { ...parts, 'extra.xml': '<x/>' }
+  expect(diffParts(parts, missingLeft).some((d) => d.detail === 'missing on left')).toBe(true)
+
+  // "missing on right": key present in left but not right
+  const missingRight = { ...parts, 'extra.xml': '<x/>' }
+  expect(diffParts(missingRight, parts).some((d) => d.detail === 'missing on right')).toBe(true)
+
+  // "content differs": same key, different canonical value
+  const firstKey = Object.keys(parts)[0]!
+  const altered = { ...parts, [firstKey]: (parts[firstKey] ?? '') + '<!-- altered -->' }
+  expect(diffParts(parts, altered).some((d) => d.detail === 'content differs')).toBe(true)
 }, 60_000)

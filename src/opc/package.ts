@@ -61,7 +61,8 @@ export class OpcPackage {
   }
 
   getPart(name: string): Uint8Array | undefined {
-    return this.parts.get(name)
+    const data = this.parts.get(name)
+    return data === undefined ? undefined : new Uint8Array(data)
   }
 
   partNames(): string[] {

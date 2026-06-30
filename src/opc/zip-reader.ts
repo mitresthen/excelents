@@ -39,7 +39,14 @@ export async function readZip(
     const localExtraLen = view.getUint16(localOffset + 28, true)
     const dataStart = localOffset + 30 + localNameLen + localExtraLen
     const body = bytes.subarray(dataStart, dataStart + compSize)
-    const data = method === 8 ? await codec.inflateRaw(body) : body.slice()
+    let data: Uint8Array
+    if (method === 8) {
+      data = await codec.inflateRaw(body)
+    } else if (method === 0) {
+      data = body.slice()
+    } else {
+      throw new Error(`Unsupported ZIP compression method ${method} for ${name}`)
+    }
     out.set(name, data)
 
     p += 46 + nameLen + extraLen + commentLen
