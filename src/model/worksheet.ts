@@ -55,6 +55,7 @@ export class Worksheet {
     return this.mergeRanges
   }
 
+  /** The highest row number that has been touched (created via getRow/getCell), used to place addRow. */
   get rowCount(): number {
     let max = 0
     for (const n of this.rows.keys()) {
@@ -66,8 +67,8 @@ export class Worksheet {
   get dimensions(): RangeBox | undefined {
     let top = Infinity
     let left = Infinity
-    let bottom = 0
-    let right = 0
+    let bottom = -Infinity
+    let right = -Infinity
     let any = false
     for (const row of this.rows.values()) {
       for (const cell of row.cells) {
