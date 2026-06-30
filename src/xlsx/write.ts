@@ -15,18 +15,9 @@ export async function writeXlsx(wb: Workbook): Promise<Uint8Array> {
   const sst = new SharedStrings()
   const registry = new StyleRegistry()
 
-  // Pre-pass: intern every cell style so all xf indices are assigned before
-  // worksheet serialization (which looks up indices from the same registry).
-  for (const sheet of wb.sheets) {
-    for (const row of sheet.rows) {
-      for (const cell of row.cells) {
-        registry.xfIndexFor(cell.style)
-      }
-    }
-  }
-
-  // Serialize all worksheets (with style references) so the SST is fully
-  // populated before we emit it.
+  // Serialize all worksheets first. This drives both interning passes: every cell
+  // populates the SST and interns its style into the registry (xfIndexFor), so both
+  // tables are complete before sharedStrings.xml and styles.xml are emitted below.
   const worksheetParts = wb.sheets.map((sheet, i) => ({
     name: `xl/worksheets/sheet${i + 1}.xml`,
     data: enc(writeWorksheetXml(sheet, sst, registry)),

@@ -1,4 +1,4 @@
-import type { Borders, CellStyle, Fill, Font } from '../model/style'
+import type { Alignment, Borders, CellStyle, Fill, Font } from '../model/style'
 import { builtinFormatId } from '../utils/number-format'
 import { XmlWriter } from '../xml/writer'
 
@@ -17,6 +17,29 @@ interface XfEntry {
   fontId: number
   fillId: number
   borderId: number
+  /** Inline alignment, when the style sets one. Alignment is not interned into a separate table. */
+  alignment?: Alignment
+}
+
+/** OOXML `vertical` uses `center`; our model exposes the more conventional `middle`. */
+const VERTICAL_TO_OOXML: Record<NonNullable<Alignment['vertical']>, string> = {
+  top: 'top',
+  middle: 'center',
+  bottom: 'bottom',
+}
+
+/** True when the alignment carries at least one meaningful facet (empty `{}` is treated as none). */
+function hasAlignment(a: Alignment | undefined): a is Alignment {
+  return (
+    a !== undefined &&
+    (a.horizontal !== undefined || a.vertical !== undefined || a.wrapText === true)
+  )
+}
+
+/** Stable, key-order-independent dedup key for an alignment facet. */
+function alignmentKey(a: Alignment | undefined): string {
+  if (a === undefined) return ''
+  return `h=${a.horizontal ?? ''}|v=${a.vertical ?? ''}|w=${a.wrapText === true ? '1' : ''}`
 }
 
 const DEFAULT_FONT: Font = { name: 'Calibri', size: 11 }
@@ -55,7 +78,8 @@ export class StyleRegistry {
     this.fillKeyMap.set(JSON.stringify(FILL_NONE), 0)
     this.fillKeyMap.set(JSON.stringify(FILL_GRAY125), 1)
     this.borderKeyMap.set(JSON.stringify(DEFAULT_BORDER), 0)
-    this.xfKeyMap.set('0,0,0,0', 0)
+    // Must match the key shape produced by xfIndexFor (trailing empty alignment segment).
+    this.xfKeyMap.set(`0,0,0,0,${alignmentKey(undefined)}`, 0)
   }
 
   private internNumFmt(code: string | undefined): number {
@@ -116,11 +140,12 @@ export class StyleRegistry {
     const fontId = this.internFont(style.font)
     const fillId = this.internFill(style.fill)
     const borderId = this.internBorder(style.border)
-    const key = `${numFmtId},${fontId},${fillId},${borderId}`
+    const alignment = hasAlignment(style.alignment) ? style.alignment : undefined
+    const key = `${numFmtId},${fontId},${fillId},${borderId},${alignmentKey(alignment)}`
     const existing = this.xfKeyMap.get(key)
     if (existing !== undefined) return existing
     const idx = this.xfList.length
-    this.xfList.push({ numFmtId, fontId, fillId, borderId })
+    this.xfList.push({ numFmtId, fontId, fillId, borderId, alignment })
     this.xfKeyMap.set(key, idx)
     return idx
   }
@@ -186,6 +211,14 @@ function writeBorderXml(w: XmlWriter, border: Borders): void {
   w.close('border')
 }
 
+function writeAlignmentXml(w: XmlWriter, a: Alignment): void {
+  w.leaf('alignment', {
+    horizontal: a.horizontal,
+    vertical: a.vertical !== undefined ? VERTICAL_TO_OOXML[a.vertical] : undefined,
+    wrapText: a.wrapText === true ? 1 : undefined,
+  })
+}
+
 /**
  * Serialize the style registry to `xl/styles.xml`.
  *
@@ -227,7 +260,7 @@ export function writeStylesXml(registry: StyleRegistry): string {
   const xfs = registry.xfs
   w.open('cellXfs', { count: xfs.length })
   for (const xf of xfs) {
-    w.leaf('xf', {
+    const attrs = {
       numFmtId: xf.numFmtId,
       fontId: xf.fontId,
       fillId: xf.fillId,
@@ -237,7 +270,15 @@ export function writeStylesXml(registry: StyleRegistry): string {
       applyFont: xf.fontId !== 0 ? 1 : undefined,
       applyFill: xf.fillId !== 0 ? 1 : undefined,
       applyBorder: xf.borderId !== 0 ? 1 : undefined,
-    })
+      applyAlignment: xf.alignment !== undefined ? 1 : undefined,
+    }
+    if (xf.alignment === undefined) {
+      w.leaf('xf', attrs)
+    } else {
+      w.open('xf', attrs)
+      writeAlignmentXml(w, xf.alignment)
+      w.close('xf')
+    }
   }
   w.close('cellXfs')
 
