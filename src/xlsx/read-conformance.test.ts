@@ -57,3 +57,35 @@ test('a formula cell that also carries a hyperlink keeps its formula', async () 
   }
   expect(a1.formula).toContain('CONCAT')
 })
+
+const byName = async (suffix: string) =>
+  readXlsx(await parseFixture(listFixtures().find((p) => p.endsWith(suffix))!))
+
+test('the SP-5 readers fire on real fixtures (not just synthetic round-trips)', async () => {
+  // Defined names: test-issue-877.xlsx carries a set of workbook-scoped names.
+  const named = await byName('test-issue-877.xlsx')
+  expect(named.definedNames.length).toBe(15)
+  expect(named.definedNames.every((n) => n.name !== '' && n.formula !== '')).toBe(true)
+
+  // Data validation: test-pr-1204.xlsx carries one validation.
+  const validated = await byName('test-pr-1204.xlsx')
+  const dvCount = validated.sheets.reduce((n, s) => n + s.dataValidations.length, 0)
+  expect(dvCount).toBeGreaterThanOrEqual(1)
+  const dv = validated.sheets.flatMap((s) => s.dataValidations)[0]!
+  expect(dv.sqref).not.toBe('')
+  expect(dv.formula1.length).toBeGreaterThan(0)
+
+  // Tables: test-issue-1669.xlsx carries two tables, each with a name and columns.
+  const tabled = await byName('test-issue-1669.xlsx')
+  const tables = tabled.sheets.flatMap((s) => s.tables)
+  expect(tables.length).toBe(2)
+  expect(tables.every((t) => t.name !== '' && t.ref !== '' && t.columns.length > 0)).toBe(true)
+})
+
+test('every fixture still parses and exposes definedNames as an array', async () => {
+  for (const path of listFixtures()) {
+    if (KNOWN_INCOMPLETE.has(path.split('/').pop()!)) continue
+    const wb = await readXlsx(await parseFixture(path))
+    expect(Array.isArray(wb.definedNames)).toBe(true)
+  }
+})
