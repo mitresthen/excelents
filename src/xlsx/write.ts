@@ -4,7 +4,12 @@ import { SharedStrings } from '../utils/shared-strings'
 import { CT } from './content-types'
 import { writeSharedStringsXml } from './shared-strings-writer'
 import { StyleRegistry, writeStylesXml } from './styles-writer'
-import { writeRootRelsXml, writeWorkbookRelsXml, writeWorkbookXml } from './workbook-writer'
+import {
+  writeRootRelsXml,
+  writeWorkbookRelsXml,
+  writeWorkbookXml,
+  writeWorksheetRelsXml,
+} from './workbook-writer'
 import { writeWorksheetXml } from './worksheet-writer'
 
 const enc = (s: string): Uint8Array => new TextEncoder().encode(s)
@@ -18,16 +23,24 @@ export async function writeXlsx(wb: Workbook): Promise<Uint8Array> {
   // Serialize all worksheets first. This drives both interning passes: every cell
   // populates the SST and interns its style into the registry (xfIndexFor), so both
   // tables are complete before sharedStrings.xml and styles.xml are emitted below.
-  const worksheetParts = wb.sheets.map((sheet, i) => ({
-    name: `xl/worksheets/sheet${i + 1}.xml`,
-    data: enc(writeWorksheetXml(sheet, sst, registry)),
-  }))
+  // Each result also carries the sheet's external hyperlink relationships.
+  const worksheetParts = wb.sheets.map((sheet, i) => {
+    const result = writeWorksheetXml(sheet, sst, registry)
+    return { index: i + 1, data: enc(result.xml), hyperlinks: result.hyperlinks }
+  })
 
   pkg.setPart('_rels/.rels', CT.rels, enc(writeRootRelsXml()))
   pkg.setPart('xl/workbook.xml', CT.workbook, enc(writeWorkbookXml(wb)))
 
-  for (const { name, data } of worksheetParts) {
-    pkg.setPart(name, CT.worksheet, data)
+  for (const { index, data, hyperlinks } of worksheetParts) {
+    pkg.setPart(`xl/worksheets/sheet${index}.xml`, CT.worksheet, data)
+    if (hyperlinks.length > 0) {
+      pkg.setPart(
+        `xl/worksheets/_rels/sheet${index}.xml.rels`,
+        CT.rels,
+        enc(writeWorksheetRelsXml(hyperlinks)),
+      )
+    }
   }
 
   // styles.xml is always required; emit it before the rels so the part exists.

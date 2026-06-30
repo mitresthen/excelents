@@ -47,6 +47,11 @@ export class Worksheet {
     return col
   }
 
+  /** Defined columns (those touched via `column(n)`), in ascending column order. */
+  get columns(): readonly Column[] {
+    return [...this.cols.keys()].sort((a, b) => a - b).map((n) => this.cols.get(n)!)
+  }
+
   merge(range: string): void {
     this.mergeRanges.push(range)
   }
