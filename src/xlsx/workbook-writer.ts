@@ -10,6 +10,7 @@ const WORKSHEET_REL =
   'http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet'
 const SHARED_STRINGS_REL =
   'http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings'
+const STYLES_REL = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles'
 
 /** `xl/workbook.xml` — the sheet list. */
 export function writeWorkbookXml(wb: Workbook): string {
@@ -22,7 +23,10 @@ export function writeWorkbookXml(wb: Workbook): string {
   return w.toString()
 }
 
-/** `xl/_rels/workbook.xml.rels` — workbook → each worksheet, then sharedStrings if present. */
+/**
+ * `xl/_rels/workbook.xml.rels` — workbook → each worksheet, then sharedStrings (if present),
+ * then styles (always included — Excel requires it).
+ */
 export function writeWorkbookRelsXml(wb: Workbook, includeSharedStrings = false): string {
   const w = new XmlWriter().declaration().open('Relationships', { xmlns: PKG_REL_NS })
   wb.sheets.forEach((_sheet, i) => {
@@ -32,13 +36,20 @@ export function writeWorkbookRelsXml(wb: Workbook, includeSharedStrings = false)
       Target: `worksheets/sheet${i + 1}.xml`,
     })
   })
+  let nextRid = wb.sheets.length + 1
   if (includeSharedStrings) {
     w.leaf('Relationship', {
-      Id: `rId${wb.sheets.length + 1}`,
+      Id: `rId${nextRid}`,
       Type: SHARED_STRINGS_REL,
       Target: 'sharedStrings.xml',
     })
+    nextRid++
   }
+  w.leaf('Relationship', {
+    Id: `rId${nextRid}`,
+    Type: STYLES_REL,
+    Target: 'styles.xml',
+  })
   w.close('Relationships')
   return w.toString()
 }
