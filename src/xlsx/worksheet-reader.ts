@@ -74,8 +74,11 @@ function sharedToValue(v: SharedStringValue | undefined): CellValue {
   return { richText: v.runs }
 }
 
-/** Populate a Worksheet from one `sheetN.xml` (inverse of writeWorksheetXml). */
-export function readWorksheetInto(ws: Worksheet, xml: string, ctx: ReadContext): void {
+/**
+ * Populate a Worksheet from one `sheetN.xml` (inverse of writeWorksheetXml).
+ * Returns the relationship ids of any `<tablePart>` elements, for the caller to resolve.
+ */
+export function readWorksheetInto(ws: Worksheet, xml: string, ctx: ReadContext): string[] {
   let ref: string | undefined
   let type = 'n'
   let v: string | undefined
@@ -94,6 +97,7 @@ export function readWorksheetInto(ws: Worksheet, xml: string, ctx: ReadContext):
   let dvF2: string | undefined
   let inDvF1 = false
   let inDvF2 = false
+  const tableRids: string[] = []
 
   const finalize = (): void => {
     if (ref === undefined) return
@@ -177,6 +181,10 @@ export function readWorksheetInto(ws: Worksheet, xml: string, ctx: ReadContext):
         }
       } else if (tok.name === 'formula1') inDvF1 = !tok.selfClosing
       else if (tok.name === 'formula2') inDvF2 = !tok.selfClosing
+      else if (tok.name === 'tablePart') {
+        const rid = tok.attributes['r:id']
+        if (rid !== undefined) tableRids.push(rid)
+      }
     } else if (tok.type === 'close') {
       if (tok.name === 'v') isV = false
       else if (tok.name === 'f') inF = false
@@ -215,4 +223,6 @@ export function readWorksheetInto(ws: Worksheet, xml: string, ctx: ReadContext):
     const cell = ws.cell(hRef)
     if (typeof cell.value === 'string') cell.value = { text: cell.value, hyperlink: url }
   }
+
+  return tableRids
 }

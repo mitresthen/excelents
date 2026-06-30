@@ -4,6 +4,7 @@ import type { Cell, CellValue } from './cell'
 import { Column } from './column'
 import type { DataValidation } from './data-validation'
 import { Row } from './row'
+import type { TableDefinition } from './table'
 
 /** A worksheet: a sparse grid of cells, plus columns, merges, and a name. */
 export class Worksheet {
@@ -11,6 +12,7 @@ export class Worksheet {
   private readonly cols = new Map<number, Column>()
   private readonly mergeRanges: string[] = []
   private readonly validations: DataValidation[] = []
+  private readonly tableDefs: TableDefinition[] = []
 
   constructor(public name: string) {}
 
@@ -68,6 +70,14 @@ export class Worksheet {
 
   get dataValidations(): readonly DataValidation[] {
     return this.validations
+  }
+
+  addTable(def: TableDefinition): void {
+    this.tableDefs.push(def)
+  }
+
+  get tables(): readonly TableDefinition[] {
+    return this.tableDefs
   }
 
   /** The highest row number that has been touched (created via getRow/getCell), used to place addRow. */

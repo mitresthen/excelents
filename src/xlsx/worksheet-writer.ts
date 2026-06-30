@@ -1,5 +1,6 @@
 import type { Cell, FormulaValue } from '../model/cell'
 import type { CellStyle } from '../model/style'
+import type { TableDefinition } from '../model/table'
 import type { Worksheet } from '../model/worksheet'
 import { dateToSerial } from '../utils/date'
 import { encodeRange } from '../utils/range'
@@ -22,10 +23,11 @@ interface PendingHyperlink {
   target: string
 }
 
-/** A worksheet's serialized XML plus the external hyperlink relationships it references. */
+/** A worksheet's serialized XML plus the relationships (hyperlinks, tables) it references. */
 export interface WorksheetWriteResult {
   readonly xml: string
   readonly hyperlinks: ReadonlyArray<{ rid: string; target: string }>
+  readonly tables: ReadonlyArray<{ rid: string; table: TableDefinition }>
 }
 
 /** The style under which a value is rendered — Date cells force a date number-format. */
@@ -198,6 +200,20 @@ export function writeWorksheetXml(
     w.close('hyperlinks')
   }
 
+  // tableParts close the worksheet; their rIds continue past the hyperlink rIds so all of a
+  // sheet's relationships share one numbering in its .rels part.
+  const tableRels: Array<{ rid: string; table: TableDefinition }> = []
+  const wsTables = ws.tables
+  if (wsTables.length > 0) {
+    w.open('tableParts', { count: wsTables.length })
+    wsTables.forEach((table, i) => {
+      const rid = `rId${pending.length + i + 1}`
+      w.leaf('tablePart', { 'r:id': rid })
+      tableRels.push({ rid, table })
+    })
+    w.close('tableParts')
+  }
+
   w.close('worksheet')
-  return { xml: w.toString(), hyperlinks: rels }
+  return { xml: w.toString(), hyperlinks: rels, tables: tableRels }
 }

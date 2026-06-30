@@ -13,6 +13,7 @@ const SHARED_STRINGS_REL =
 const STYLES_REL = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles'
 const HYPERLINK_REL =
   'http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink'
+const TABLE_REL = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/table'
 
 /** `xl/workbook.xml` — the sheet list. */
 export function writeWorkbookXml(wb: Workbook): string {
@@ -69,11 +70,12 @@ export function writeWorkbookRelsXml(wb: Workbook, includeSharedStrings = false)
 }
 
 /**
- * `xl/worksheets/_rels/sheetN.xml.rels` — a worksheet's external hyperlink targets.
- * Each entry is `{ rid, target }`; targets are written with `TargetMode="External"`.
+ * `xl/worksheets/_rels/sheetN.xml.rels` — a worksheet's relationships. Hyperlinks are
+ * external (`TargetMode="External"`); table targets are internal package paths.
  */
 export function writeWorksheetRelsXml(
   hyperlinks: ReadonlyArray<{ rid: string; target: string }>,
+  tables: ReadonlyArray<{ rid: string; target: string }> = [],
 ): string {
   const w = new XmlWriter().declaration().open('Relationships', { xmlns: PKG_REL_NS })
   for (const { rid, target } of hyperlinks) {
@@ -83,6 +85,9 @@ export function writeWorksheetRelsXml(
       Target: target,
       TargetMode: 'External',
     })
+  }
+  for (const { rid, target } of tables) {
+    w.leaf('Relationship', { Id: rid, Type: TABLE_REL, Target: target })
   }
   return w.close('Relationships').toString()
 }

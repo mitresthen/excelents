@@ -4,5 +4,6 @@ export const CT = {
   worksheet: 'application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml',
   styles: 'application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml',
   sharedStrings: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sharedStrings+xml',
+  table: 'application/vnd.openxmlformats-officedocument.spreadsheetml.table+xml',
   rels: 'application/vnd.openxmlformats-package.relationships+xml',
 } as const

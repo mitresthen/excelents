@@ -10,6 +10,7 @@ import {
   writeWorkbookXml,
   writeWorksheetRelsXml,
 } from './workbook-writer'
+import { writeTableXml } from './table-writer'
 import { writeWorksheetXml } from './worksheet-writer'
 
 const enc = (s: string): Uint8Array => new TextEncoder().encode(s)
@@ -26,19 +27,38 @@ export async function writeXlsx(wb: Workbook): Promise<Uint8Array> {
   // Each result also carries the sheet's external hyperlink relationships.
   const worksheetParts = wb.sheets.map((sheet, i) => {
     const result = writeWorksheetXml(sheet, sst, registry)
-    return { index: i + 1, data: enc(result.xml), hyperlinks: result.hyperlinks }
+    return {
+      index: i + 1,
+      data: enc(result.xml),
+      hyperlinks: result.hyperlinks,
+      tables: result.tables,
+    }
   })
 
   pkg.setPart('_rels/.rels', CT.rels, enc(writeRootRelsXml()))
   pkg.setPart('xl/workbook.xml', CT.workbook, enc(writeWorkbookXml(wb)))
 
-  for (const { index, data, hyperlinks } of worksheetParts) {
+  // Table parts are numbered workbook-globally (table1.xml, table2.xml, ...).
+  let tableCounter = 0
+  for (const { index, data, hyperlinks, tables } of worksheetParts) {
     pkg.setPart(`xl/worksheets/sheet${index}.xml`, CT.worksheet, data)
-    if (hyperlinks.length > 0) {
+
+    const tableRels: Array<{ rid: string; target: string }> = []
+    for (const { rid, table } of tables) {
+      tableCounter++
+      pkg.setPart(
+        `xl/tables/table${tableCounter}.xml`,
+        CT.table,
+        enc(writeTableXml(table, tableCounter)),
+      )
+      tableRels.push({ rid, target: `../tables/table${tableCounter}.xml` })
+    }
+
+    if (hyperlinks.length > 0 || tableRels.length > 0) {
       pkg.setPart(
         `xl/worksheets/_rels/sheet${index}.xml.rels`,
         CT.rels,
-        enc(writeWorksheetRelsXml(hyperlinks)),
+        enc(writeWorksheetRelsXml(hyperlinks, tableRels)),
       )
     }
   }

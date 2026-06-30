@@ -3,6 +3,7 @@ import { createWorkbook } from '../model/workbook'
 import { OpcPackage } from '../opc/package'
 import { readSharedStrings, type SharedStringValue } from './shared-strings-reader'
 import { readStyles } from './styles-reader'
+import { readTableXml } from './table-reader'
 import { readWorkbookParts } from './workbook-reader'
 import { readWorksheetInto } from './worksheet-reader'
 
@@ -26,18 +27,27 @@ export async function readXlsx(bytes: Uint8Array): Promise<Workbook> {
   const wb = createWorkbook()
   for (const sheet of parts.sheets) {
     const ws = wb.addSheet(sheet.name)
-    // Each worksheet's external hyperlink targets live in its own rels part.
+    // A worksheet's relationships (hyperlinks, tables) live in its own rels part.
+    const sheetRels = pkg.relationshipsFor(sheet.path)
     const hyperlinkTargets = new Map<string, string>()
-    for (const rel of pkg.relationshipsFor(sheet.path)) {
+    for (const rel of sheetRels) {
       if (rel.targetMode === 'External' || rel.type.endsWith('/hyperlink')) {
         hyperlinkTargets.set(rel.id, rel.target)
       }
     }
-    readWorksheetInto(ws, decode(pkg.getPart(sheet.path)), {
+    const tableRids = readWorksheetInto(ws, decode(pkg.getPart(sheet.path)), {
       sharedStrings,
       cellStyles,
       hyperlinkTargets,
     })
+    // Resolve <tablePart> rIds to their table parts and reconstruct each table.
+    const relById = new Map(sheetRels.map((rel) => [rel.id, rel]))
+    for (const rid of tableRids) {
+      const rel = relById.get(rid)
+      if (rel === undefined || !rel.type.endsWith('/table')) continue
+      const tableXml = decode(pkg.getPart(rel.target))
+      if (tableXml !== '') ws.addTable(readTableXml(tableXml))
+    }
   }
   for (const { name, formula } of parts.definedNames) wb.defineName(name, formula)
   return wb
