@@ -8,6 +8,8 @@ export interface WorkbookParts {
   readonly sharedStringsPath: string | undefined
   /** Absolute path to styles.xml, or undefined if absent. */
   readonly stylesPath: string | undefined
+  /** Workbook-scoped defined names in document order. */
+  readonly definedNames: ReadonlyArray<{ name: string; formula: string }>
 }
 
 const OFFICE_DOC = '/officeDocument'
@@ -27,6 +29,11 @@ export function readWorkbookParts(pkg: OpcPackage): WorkbookParts {
   const byId = new Map(rels.map((r) => [r.id, r]))
 
   const sheets: Array<{ name: string; path: string }> = []
+  const definedNames: Array<{ name: string; formula: string }> = []
+  let dnName: string | undefined
+  let dnText = ''
+  let inDefinedName = false
+
   const xml = new TextDecoder().decode(pkg.getPart(workbookPath) ?? new Uint8Array())
   for (const tok of tokenize(xml)) {
     if (tok.type === 'open' && tok.name === 'sheet') {
@@ -34,9 +41,18 @@ export function readWorkbookParts(pkg: OpcPackage): WorkbookParts {
       const rid = tok.attributes['r:id']
       const target = rid !== undefined ? byId.get(rid)?.target : undefined
       if (name !== undefined && target !== undefined) sheets.push({ name, path: target })
+    } else if (tok.type === 'open' && tok.name === 'definedName') {
+      inDefinedName = true
+      dnName = tok.attributes['name']
+      dnText = ''
+    } else if (tok.type === 'close' && tok.name === 'definedName') {
+      if (dnName !== undefined) definedNames.push({ name: dnName, formula: dnText })
+      inDefinedName = false
+    } else if (tok.type === 'text' && inDefinedName) {
+      dnText += tok.value
     }
   }
   const sharedStringsPath = rels.find((r) => r.type.endsWith(SHARED_STRINGS))?.target
   const stylesPath = rels.find((r) => r.type.endsWith(STYLES))?.target
-  return { sheets, sharedStringsPath, stylesPath }
+  return { sheets, sharedStringsPath, stylesPath, definedNames }
 }

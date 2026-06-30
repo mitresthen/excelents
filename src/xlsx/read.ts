@@ -39,5 +39,6 @@ export async function readXlsx(bytes: Uint8Array): Promise<Workbook> {
       hyperlinkTargets,
     })
   }
+  for (const { name, formula } of parts.definedNames) wb.defineName(name, formula)
   return wb
 }

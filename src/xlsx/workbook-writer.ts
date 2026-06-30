@@ -21,7 +21,19 @@ export function writeWorkbookXml(wb: Workbook): string {
   wb.sheets.forEach((sheet, i) => {
     w.leaf('sheet', { name: sheet.name, sheetId: i + 1, 'r:id': `rId${i + 1}` })
   })
-  w.close('sheets').close('workbook')
+  w.close('sheets')
+
+  // definedNames follows sheets per the CT_Workbook schema sequence.
+  const names = wb.definedNames
+  if (names.length > 0) {
+    w.open('definedNames')
+    for (const { name, formula } of names) {
+      w.open('definedName', { name }).text(formula).close('definedName')
+    }
+    w.close('definedNames')
+  }
+
+  w.close('workbook')
   return w.toString()
 }
 
