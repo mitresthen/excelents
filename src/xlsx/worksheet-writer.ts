@@ -13,6 +13,9 @@ const REL_NS = 'http://schemas.openxmlformats.org/officeDocument/2006/relationsh
 /** Applied to Date cells that carry no explicit number-format, so exceljs reads them back as dates. */
 const DEFAULT_DATE_FORMAT = 'mm-dd-yy'
 
+/** Excel error literal used for values that cannot be represented numerically (NaN/±Infinity). */
+const NUM_ERROR = '#NUM!'
+
 /** A hyperlink discovered while serializing a sheet: its cell ref and external target. */
 interface PendingHyperlink {
   ref: string
@@ -50,7 +53,12 @@ function writeCellValue(
     return
   }
   if (typeof v === 'number') {
-    w.open('c', { r: cell.address, s }).open('v').text(String(v)).close('v').close('c')
+    if (Number.isFinite(v)) {
+      w.open('c', { r: cell.address, s }).open('v').text(String(v)).close('v').close('c')
+    } else {
+      // NaN/±Infinity are not valid OOXML numeric literals — emit a #NUM! error cell.
+      w.open('c', { r: cell.address, t: 'e', s }).open('v').text(NUM_ERROR).close('v').close('c')
+    }
     return
   }
   if (typeof v === 'boolean') {
@@ -102,7 +110,12 @@ function writeFormulaCell(
     t = 'b'
     rendered = result ? '1' : '0'
   } else if (typeof result === 'number') {
-    rendered = String(result)
+    if (Number.isFinite(result)) {
+      rendered = String(result)
+    } else {
+      t = 'e'
+      rendered = NUM_ERROR
+    }
   } else if (result instanceof Date) {
     rendered = String(dateToSerial(result))
   }

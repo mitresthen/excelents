@@ -22,6 +22,23 @@ test('a Date value round-trips through exceljs as a Date', async () => {
   expect(value).toEqual(when)
 })
 
+test('a non-finite number is written as an error cell, not invalid XML', async () => {
+  const wb = createWorkbook()
+  const ws = wb.addSheet('S')
+  ws.cell('A1').value = NaN
+  ws.cell('A2').value = Infinity
+  const bytes = await writeXlsx(wb)
+
+  const sheet = await readBack(bytes)
+  for (const ref of ['A1', 'A2']) {
+    const value = sheet?.getCell(ref).value
+    if (value === null || typeof value !== 'object' || !('error' in value)) {
+      throw new Error(`expected an error cell value at ${ref}`)
+    }
+    expect(value.error).toBe('#NUM!')
+  }
+})
+
 test('a formula with a numeric result round-trips through exceljs', async () => {
   const wb = createWorkbook()
   const ws = wb.addSheet('S')

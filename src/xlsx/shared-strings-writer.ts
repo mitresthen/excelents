@@ -18,13 +18,14 @@ function writeRun(w: XmlWriter, run: RichTextRun): void {
   const font = run.font
   if (font !== undefined) {
     w.open('rPr')
+    // CT_RPrElt (ECMA-376 §18.4.7) sequence: rFont → … → b → i → … → color → sz → u → …
+    // Inside <rPr> the font-name element is <rFont>, not <name> (which is CT_Font in styles.xml).
+    if (font.name !== undefined) w.leaf('rFont', { val: font.name })
     if (font.bold === true) w.leaf('b')
     if (font.italic === true) w.leaf('i')
-    if (font.underline === true) w.leaf('u')
-    if (font.size !== undefined) w.leaf('sz', { val: font.size })
     if (font.color !== undefined) w.leaf('color', { rgb: font.color })
-    // Inside <rPr> the font-name element is <rFont> (CT_RPrElt), not <name>.
-    if (font.name !== undefined) w.leaf('rFont', { val: font.name })
+    if (font.size !== undefined) w.leaf('sz', { val: font.size })
+    if (font.underline === true) w.leaf('u')
     w.close('rPr')
   }
   writeTextEl(w, run.text)
