@@ -21,3 +21,21 @@ test('round-trips string, number, and boolean cell values', async () => {
   expect(s.cell('C1').value).toBe(true)
   expect(s.cell('C2').value).toBe(false)
 })
+
+test('round-trips applied cell styles and Date values', async () => {
+  const wb = createWorkbook()
+  const ws = wb.addSheet('S')
+  const bold = ws.cell('A1')
+  bold.value = 'x'
+  bold.style = { font: { bold: true }, numberFormat: '0.00' }
+  const when = new Date(Date.UTC(2026, 5, 30, 12, 0, 0))
+  ws.cell('B1').value = when
+  const r = await readXlsx(await writeXlsx(wb))
+  const s = r.sheets[0]!
+  expect(s.cell('A1').style.font?.bold).toBe(true)
+  expect(s.cell('A1').style.numberFormat).toBe('0.00')
+  const bVal = s.cell('B1').value
+  expect(bVal).toBeInstanceOf(Date)
+  if (!(bVal instanceof Date)) throw new Error('expected a Date')
+  expect(bVal.getTime()).toBe(when.getTime())
+})

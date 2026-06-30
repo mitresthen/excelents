@@ -2,6 +2,7 @@ import type { Workbook } from '../model/workbook'
 import { createWorkbook } from '../model/workbook'
 import { OpcPackage } from '../opc/package'
 import { readSharedStrings, type SharedStringValue } from './shared-strings-reader'
+import { readStyles } from './styles-reader'
 import { readWorkbookParts } from './workbook-reader'
 import { readWorksheetInto } from './worksheet-reader'
 
@@ -17,7 +18,11 @@ export async function readXlsx(bytes: Uint8Array): Promise<Workbook> {
     parts.sharedStringsPath !== undefined
       ? readSharedStrings(decode(pkg.getPart(parts.sharedStringsPath)))
       : []
-  const ctx = { sharedStrings }
+  const cellStyles =
+    parts.stylesPath !== undefined
+      ? readStyles(decode(pkg.getPart(parts.stylesPath))).cellStyles
+      : []
+  const ctx = { sharedStrings, cellStyles }
 
   const wb = createWorkbook()
   for (const sheet of parts.sheets) {

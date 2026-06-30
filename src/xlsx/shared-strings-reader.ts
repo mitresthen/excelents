@@ -45,9 +45,7 @@ export function readSharedStrings(xml: string): SharedStringValue[] {
       if (tok.name === 't') inText = false
       else if (tok.name === 'rPr') inFont = false
       else if (tok.name === 'r') {
-        runs.push(
-          font !== undefined && Object.keys(font).length > 0 ? { text, font } : { text },
-        )
+        runs.push(font !== undefined && Object.keys(font).length > 0 ? { text, font } : { text })
       } else if (tok.name === 'si') {
         out.push(sawRun ? { kind: 'rich', runs } : { kind: 'plain', text: plain })
       }

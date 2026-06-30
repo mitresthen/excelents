@@ -55,3 +55,30 @@ export function builtinFormatId(code: string): number | undefined {
   }
   return undefined
 }
+
+/**
+ * True when a number-format code renders a date/time, so a numeric cell carrying it should be
+ * read back as a `Date`. A date token is an unescaped `y/m/d/h/s` outside quoted literals,
+ * bracketed sections (`[Red]`, `[h]`), and backslash escapes.
+ */
+export function isDateFormat(code: string): boolean {
+  let inQuote = false
+  let inBracket = false
+  for (let i = 0; i < code.length; i++) {
+    const ch = code[i]!
+    if (inQuote) {
+      if (ch === '"') inQuote = false
+      continue
+    }
+    if (inBracket) {
+      if (ch === ']') inBracket = false
+      continue
+    }
+    if (ch === '"') inQuote = true
+    else if (ch === '[') inBracket = true
+    else if (ch === '\\')
+      i++ // the escaped next char is a literal, skip it
+    else if ('ymdhsYMDHS'.includes(ch)) return true
+  }
+  return false
+}

@@ -1,6 +1,17 @@
 import { createRequire } from 'node:module'
 import { expect, test } from 'vitest'
-import { BUILTIN_FORMATS, builtinFormatCode, builtinFormatId } from './number-format'
+import { BUILTIN_FORMATS, builtinFormatCode, builtinFormatId, isDateFormat } from './number-format'
+
+test('isDateFormat recognizes date/time codes and rejects numeric ones', () => {
+  expect(isDateFormat('mm-dd-yy')).toBe(true)
+  expect(isDateFormat('yyyy-mm-dd')).toBe(true)
+  expect(isDateFormat('h:mm:ss')).toBe(true)
+  expect(isDateFormat('0.00')).toBe(false)
+  expect(isDateFormat('#,##0')).toBe(false)
+  // 'd'/'m' inside a quoted literal or a bracketed color/condition section is not a date token
+  expect(isDateFormat('"day"0')).toBe(false)
+  expect(isDateFormat('[Red]0.0')).toBe(false)
+})
 
 test('known builtin ids map to their canonical codes', () => {
   expect(builtinFormatCode(0)).toBe('General')

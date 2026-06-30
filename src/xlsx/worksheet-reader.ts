@@ -1,10 +1,14 @@
 import type { CellValue } from '../model/cell'
+import type { CellStyle } from '../model/style'
 import type { Worksheet } from '../model/worksheet'
+import { serialToDate } from '../utils/date'
+import { isDateFormat } from '../utils/number-format'
 import { tokenize } from '../xml/tokenizer'
 import type { SharedStringValue } from './shared-strings-reader'
 
 export interface ReadContext {
   readonly sharedStrings: SharedStringValue[]
+  readonly cellStyles: CellStyle[]
 }
 
 function sharedToValue(v: SharedStringValue | undefined): CellValue {
@@ -18,6 +22,7 @@ export function readWorksheetInto(ws: Worksheet, xml: string, ctx: ReadContext):
   let ref: string | undefined
   let type = 'n'
   let v: string | undefined
+  let sIndex: number | undefined
   let isV = false
   let inlineText: string | undefined
   let inIs = false
@@ -26,6 +31,8 @@ export function readWorksheetInto(ws: Worksheet, xml: string, ctx: ReadContext):
   const finalize = (): void => {
     if (ref === undefined) return
     const cell = ws.cell(ref)
+    const style = sIndex !== undefined ? ctx.cellStyles[sIndex] : undefined
+    if (style !== undefined) cell.style = style
     if (type === 's' && v !== undefined) {
       cell.value = sharedToValue(ctx.sharedStrings[Number(v)])
     } else if (type === 'inlineStr' && inlineText !== undefined) {
@@ -35,7 +42,11 @@ export function readWorksheetInto(ws: Worksheet, xml: string, ctx: ReadContext):
     } else if (type === 'b' && v !== undefined) {
       cell.value = v === '1'
     } else if (v !== undefined) {
-      cell.value = Number(v)
+      // A numeric cell whose format is a date renders back as a Date.
+      cell.value =
+        style?.numberFormat !== undefined && isDateFormat(style.numberFormat)
+          ? serialToDate(Number(v))
+          : Number(v)
     }
   }
 
@@ -45,6 +56,8 @@ export function readWorksheetInto(ws: Worksheet, xml: string, ctx: ReadContext):
         finalize()
         ref = tok.attributes['r']
         type = tok.attributes['t'] ?? 'n'
+        const s = tok.attributes['s']
+        sIndex = s !== undefined ? Number(s) : undefined
         v = undefined
         inlineText = undefined
         isV = false
