@@ -44,3 +44,16 @@ test('recovered primitive cell values match exceljs for a representative fixture
   })
   expect(compared).toBeGreaterThan(0) // non-vacuous
 })
+
+test('a formula cell that also carries a hyperlink keeps its formula', async () => {
+  // formulas.xlsx A1 has a formula AND a <hyperlink> annotation. The cell value must
+  // remain the formula (our model cannot hold formula+hyperlink at once) — it must NOT
+  // be clobbered into a blank { text: '', hyperlink } wrapper.
+  const path = listFixtures().find((p) => p.endsWith('formulas.xlsx'))!
+  const wb = await readXlsx(await parseFixture(path))
+  const a1 = wb.sheets[0]!.cell('A1').value
+  if (a1 === null || typeof a1 !== 'object' || !('formula' in a1)) {
+    throw new Error(`expected A1 to stay a formula, got ${JSON.stringify(a1)}`)
+  }
+  expect(a1.formula).toContain('CONCAT')
+})

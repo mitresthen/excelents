@@ -34,3 +34,15 @@ test('relationshipsFor returns [] when the part has no rels', async () => {
   const pkg = await pkgWith({ 'xl/workbook.xml': '<workbook/>' })
   expect(pkg.relationshipsFor('xl/workbook.xml')).toEqual([])
 })
+
+test('relationshipsFor normalizes parent-directory (..) segments in targets', async () => {
+  const pkg = await pkgWith({
+    'xl/worksheets/sheet1.xml': '<worksheet/>',
+    'xl/worksheets/_rels/sheet1.xml.rels':
+      `<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">` +
+      REL('rId1', 'http://x/image', '../media/image1.png') +
+      `</Relationships>`,
+  })
+  const rels = pkg.relationshipsFor('xl/worksheets/sheet1.xml')
+  expect(rels.find((r) => r.id === 'rId1')?.target).toBe('xl/media/image1.png')
+})

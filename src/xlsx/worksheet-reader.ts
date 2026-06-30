@@ -80,10 +80,12 @@ export function readWorksheetInto(ws: Worksheet, xml: string, ctx: ReadContext):
         inF = false
         inIs = false
         if (tok.selfClosing) ref = undefined
-      } else if (tok.name === 'v') isV = true
-      else if (tok.name === 'f') inF = true
-      else if (tok.name === 'is') inIs = true
-      else if (tok.name === 't') inT = true
+      } else if (tok.name === 'v') isV = !tok.selfClosing
+      // A self-closing element emits no close event, so only "enter" it when it can hold text.
+      // Self-closing <f/> (shared-formula member) must NOT leave the accumulator open.
+      else if (tok.name === 'f') inF = !tok.selfClosing
+      else if (tok.name === 'is') inIs = !tok.selfClosing
+      else if (tok.name === 't') inT = !tok.selfClosing
       else if (tok.name === 'mergeCell') {
         const mref = tok.attributes['ref']
         if (mref !== undefined) ws.merge(mref)
@@ -121,11 +123,13 @@ export function readWorksheetInto(ws: Worksheet, xml: string, ctx: ReadContext):
   finalize()
 
   // Resolve hyperlinks (declared after sheetData) over the already-populated cells.
+  // Only a plain-string cell becomes a { text, hyperlink } value. A cell already holding a
+  // richer value (formula/number/Date/richText) keeps it — the model cannot combine a
+  // hyperlink with those, and clobbering would erase the cell's real content.
   for (const { ref: hRef, rid } of pendingHyperlinks) {
     const url = ctx.hyperlinkTargets.get(rid)
     if (url === undefined) continue
     const cell = ws.cell(hRef)
-    const text = typeof cell.value === 'string' ? cell.value : ''
-    cell.value = { text, hyperlink: url }
+    if (typeof cell.value === 'string') cell.value = { text: cell.value, hyperlink: url }
   }
 }

@@ -104,11 +104,22 @@ export class OpcPackage {
     return slash === -1 ? '' : partName.slice(0, slash)
   }
 
+  /** Collapse `seg/../` and `./` segments in a package path (e.g. `xl/worksheets/../media/x`). */
+  private static normalizePath(path: string): string {
+    const out: string[] = []
+    for (const seg of path.split('/')) {
+      if (seg === '' || seg === '.') continue
+      if (seg === '..') out.pop()
+      else out.push(seg)
+    }
+    return out.join('/')
+  }
+
   /** Resolve a relationship Target against a base directory into an absolute part path. */
   private static resolveTarget(baseDir: string, target: string): string {
-    if (target.startsWith('/')) return target.slice(1) // already package-absolute
-    if (baseDir === '') return target
-    return `${baseDir}/${target}`
+    if (target.startsWith('/')) return OpcPackage.normalizePath(target) // already package-absolute
+    if (baseDir === '') return OpcPackage.normalizePath(target)
+    return OpcPackage.normalizePath(`${baseDir}/${target}`)
   }
 
   /**
