@@ -82,6 +82,14 @@ test('the SP-5 readers fire on real fixtures (not just synthetic round-trips)', 
   expect(tables.every((t) => t.name !== '' && t.ref !== '' && t.columns.length > 0)).toBe(true)
 })
 
+test('sheet-scoped defined names in a real fixture keep their localSheetId', async () => {
+  // test-issue-877.xlsx has 4 names with a localSheetId (3 sharing a label with a global
+  // twin). They must stay scoped, not collapse to colliding global names.
+  const wb = await byName('test-issue-877.xlsx')
+  const scoped = wb.definedNames.filter((n) => n.localSheetId !== undefined)
+  expect(scoped.length).toBe(4)
+})
+
 test('every fixture still parses and exposes definedNames as an array', async () => {
   for (const path of listFixtures()) {
     if (KNOWN_INCOMPLETE.has(path.split('/').pop()!)) continue

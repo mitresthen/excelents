@@ -49,6 +49,8 @@ export async function readXlsx(bytes: Uint8Array): Promise<Workbook> {
       if (tableXml !== '') ws.addTable(readTableXml(tableXml))
     }
   }
-  for (const { name, formula } of parts.definedNames) wb.defineName(name, formula)
+  for (const { name, formula, localSheetId } of parts.definedNames) {
+    wb.defineName(name, formula, localSheetId)
+  }
   return wb
 }

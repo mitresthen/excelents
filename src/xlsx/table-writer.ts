@@ -14,7 +14,9 @@ export function writeTableXml(table: TableDefinition, id: number): string {
     // headerRowCount defaults to 1; emit 0 only when the caller suppresses the header row.
     headerRowCount: table.headerRow === false ? 0 : undefined,
   })
-  w.leaf('autoFilter', { ref: table.ref })
+  // AutoFilter lives on the header row; a header-less table must not carry one (Excel
+  // treats an AutoFilter on a header-less table as corrupt and runs file repair).
+  if (table.headerRow !== false) w.leaf('autoFilter', { ref: table.ref })
   w.open('tableColumns', { count: table.columns.length })
   table.columns.forEach((name, i) => {
     w.leaf('tableColumn', { id: i + 1, name })

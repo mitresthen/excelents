@@ -1,7 +1,30 @@
 import { expect, test } from 'vitest'
 import { createWorkbook } from '../model/workbook'
 import { readXlsx } from './read'
+import { writeTableXml } from './table-writer'
 import { writeXlsx } from './write'
+
+test('a header-less table omits autoFilter (Excel rejects an AutoFilter without a header row)', () => {
+  const xml = writeTableXml({ name: 'T', ref: 'A2:B6', columns: ['a', 'b'], headerRow: false }, 1)
+  expect(xml).not.toContain('autoFilter')
+})
+
+test('a normal (header) table keeps its autoFilter', () => {
+  const xml = writeTableXml({ name: 'T', ref: 'A1:B6', columns: ['a', 'b'] }, 1)
+  expect(xml).toContain('<autoFilter ref="A1:B6"')
+})
+
+test('a header-less table round-trips', async () => {
+  const wb = createWorkbook()
+  wb.addSheet('S').addTable({ name: 'T', ref: 'A2:B6', columns: ['a', 'b'], headerRow: false })
+  const r = await readXlsx(await writeXlsx(wb))
+  expect(r.sheets[0]!.tables[0]).toEqual({
+    name: 'T',
+    ref: 'A2:B6',
+    columns: ['a', 'b'],
+    headerRow: false,
+  })
+})
 
 test('a table round-trips through write+read', async () => {
   const wb = createWorkbook()

@@ -28,8 +28,8 @@ export function writeWorkbookXml(wb: Workbook): string {
   const names = wb.definedNames
   if (names.length > 0) {
     w.open('definedNames')
-    for (const { name, formula } of names) {
-      w.open('definedName', { name }).text(formula).close('definedName')
+    for (const { name, formula, localSheetId } of names) {
+      w.open('definedName', { name, localSheetId }).text(formula).close('definedName')
     }
     w.close('definedNames')
   }

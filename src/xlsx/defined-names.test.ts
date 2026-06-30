@@ -21,3 +21,17 @@ test('defined names round-trip through write+read', async () => {
     { name: 'Tax', formula: '0.2' },
   ])
 })
+
+test('a sheet-scoped defined name round-trips its localSheetId (no collision with a global twin)', async () => {
+  // A scoped name and a global name may share a label; both must survive distinctly, else
+  // re-serializing yields two colliding workbook-global names that Excel rejects.
+  const wb = createWorkbook()
+  wb.addSheet('S')
+  wb.defineName('Leiter', 'S!$A$1', 0)
+  wb.defineName('Leiter', 'S!$B$1')
+  const restored = await readXlsx(await writeXlsx(wb))
+  expect(restored.definedNames).toEqual([
+    { name: 'Leiter', formula: 'S!$A$1', localSheetId: 0 },
+    { name: 'Leiter', formula: 'S!$B$1' },
+  ])
+})

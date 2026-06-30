@@ -8,8 +8,8 @@ export interface WorkbookParts {
   readonly sharedStringsPath: string | undefined
   /** Absolute path to styles.xml, or undefined if absent. */
   readonly stylesPath: string | undefined
-  /** Workbook-scoped defined names in document order. */
-  readonly definedNames: ReadonlyArray<{ name: string; formula: string }>
+  /** Defined names in document order; `localSheetId` is set for sheet-scoped names. */
+  readonly definedNames: ReadonlyArray<{ name: string; formula: string; localSheetId?: number }>
 }
 
 const OFFICE_DOC = '/officeDocument'
@@ -29,8 +29,9 @@ export function readWorkbookParts(pkg: OpcPackage): WorkbookParts {
   const byId = new Map(rels.map((r) => [r.id, r]))
 
   const sheets: Array<{ name: string; path: string }> = []
-  const definedNames: Array<{ name: string; formula: string }> = []
+  const definedNames: Array<{ name: string; formula: string; localSheetId?: number }> = []
   let dnName: string | undefined
+  let dnLocalSheetId: number | undefined
   let dnText = ''
   let inDefinedName = false
 
@@ -44,9 +45,17 @@ export function readWorkbookParts(pkg: OpcPackage): WorkbookParts {
     } else if (tok.type === 'open' && tok.name === 'definedName') {
       inDefinedName = true
       dnName = tok.attributes['name']
+      const lsid = tok.attributes['localSheetId']
+      dnLocalSheetId = lsid !== undefined ? Number(lsid) : undefined
       dnText = ''
     } else if (tok.type === 'close' && tok.name === 'definedName') {
-      if (dnName !== undefined) definedNames.push({ name: dnName, formula: dnText })
+      if (dnName !== undefined) {
+        definedNames.push(
+          dnLocalSheetId === undefined
+            ? { name: dnName, formula: dnText }
+            : { name: dnName, formula: dnText, localSheetId: dnLocalSheetId },
+        )
+      }
       inDefinedName = false
     } else if (tok.type === 'text' && inDefinedName) {
       dnText += tok.value

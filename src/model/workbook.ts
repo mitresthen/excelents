@@ -3,7 +3,7 @@ import { Worksheet } from './worksheet'
 /** A workbook: an ordered collection of named worksheets. */
 export class Workbook {
   private readonly worksheets: Worksheet[] = []
-  private readonly names: Array<{ name: string; formula: string }> = []
+  private readonly names: Array<{ name: string; formula: string; localSheetId?: number }> = []
 
   addSheet(name: string): Worksheet {
     const ws = new Worksheet(name)
@@ -11,12 +11,18 @@ export class Workbook {
     return ws
   }
 
-  /** Define a workbook-scoped name mapping `name` to a formula/reference (e.g. `Sheet1!$A$1`). */
-  defineName(name: string, formula: string): void {
-    this.names.push({ name, formula })
+  /**
+   * Define a name mapping `name` to a formula/reference (e.g. `Sheet1!$A$1`). Omit
+   * `localSheetId` for a workbook-global name; pass a 0-based sheet index to scope it to
+   * that sheet (a scoped name may share its label with a global one without colliding).
+   */
+  defineName(name: string, formula: string, localSheetId?: number): void {
+    this.names.push(
+      localSheetId === undefined ? { name, formula } : { name, formula, localSheetId },
+    )
   }
 
-  get definedNames(): ReadonlyArray<{ name: string; formula: string }> {
+  get definedNames(): ReadonlyArray<{ name: string; formula: string; localSheetId?: number }> {
     return this.names
   }
 
