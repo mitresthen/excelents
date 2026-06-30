@@ -50,7 +50,7 @@ function parseRows(text: string, delimiter: string): string[][] {
 }
 
 /** Conservative inference: round-trip-safe numbers and optional booleans; else keep the string. */
-function infer(s: string, parseNumbers: boolean, parseBooleans: boolean): CellValue {
+export function infer(s: string, parseNumbers: boolean, parseBooleans: boolean): CellValue {
   if (s === '') return null
   // String(Number(s)) === s keeps leading-zero ('00210') and date-like strings as strings.
   // Number.isFinite rejects 'NaN'/'Infinity'/'-Infinity' (which pass the round-trip test but

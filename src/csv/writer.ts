@@ -15,7 +15,7 @@ function resolveSheet(
 }
 
 /** Render a cell value as its plain-text CSV representation (no quoting yet). */
-function renderValue(v: CellValue): string {
+export function renderValue(v: CellValue): string {
   if (v === null) return ''
   if (typeof v === 'string') return v
   if (typeof v === 'number') return Number.isFinite(v) ? String(v) : ''
@@ -27,7 +27,7 @@ function renderValue(v: CellValue): string {
   return result === undefined || result === null ? '' : renderValue(result)
 }
 
-function quoteField(field: string, delimiter: string, quoteAll: boolean): string {
+export function quoteField(field: string, delimiter: string, quoteAll: boolean): string {
   const mustQuote =
     quoteAll ||
     field.includes(delimiter) ||
