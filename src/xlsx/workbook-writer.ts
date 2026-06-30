@@ -8,6 +8,8 @@ const OFFICE_DOC =
   'http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument'
 const WORKSHEET_REL =
   'http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet'
+const SHARED_STRINGS_REL =
+  'http://schemas.openxmlformats.org/officeDocument/2006/relationships/sharedStrings'
 
 /** `xl/workbook.xml` — the sheet list. */
 export function writeWorkbookXml(wb: Workbook): string {
@@ -20,8 +22,8 @@ export function writeWorkbookXml(wb: Workbook): string {
   return w.toString()
 }
 
-/** `xl/_rels/workbook.xml.rels` — workbook → each worksheet. */
-export function writeWorkbookRelsXml(wb: Workbook): string {
+/** `xl/_rels/workbook.xml.rels` — workbook → each worksheet, then sharedStrings if present. */
+export function writeWorkbookRelsXml(wb: Workbook, includeSharedStrings = false): string {
   const w = new XmlWriter().declaration().open('Relationships', { xmlns: PKG_REL_NS })
   wb.sheets.forEach((_sheet, i) => {
     w.leaf('Relationship', {
@@ -30,6 +32,13 @@ export function writeWorkbookRelsXml(wb: Workbook): string {
       Target: `worksheets/sheet${i + 1}.xml`,
     })
   })
+  if (includeSharedStrings) {
+    w.leaf('Relationship', {
+      Id: `rId${wb.sheets.length + 1}`,
+      Type: SHARED_STRINGS_REL,
+      Target: 'sharedStrings.xml',
+    })
+  }
   w.close('Relationships')
   return w.toString()
 }
