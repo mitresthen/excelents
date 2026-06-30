@@ -33,7 +33,15 @@ export class OpcPackage {
   }
 
   static async read(bytes: Uint8Array): Promise<OpcPackage> {
-    const entries = await readZip(bytes)
+    return OpcPackage.fromEntries(await readZip(bytes))
+  }
+
+  /**
+   * Build a package from already-decompressed parts (name -> bytes). A streaming reader uses
+   * this to assemble just the small structural parts (content-types, rels, workbook) it needs
+   * to resolve the package, without decompressing the large worksheet bodies up front.
+   */
+  static fromEntries(entries: Map<string, Uint8Array>): OpcPackage {
     const pkg = new OpcPackage()
     for (const [name, data] of entries) {
       if (name === CONTENT_TYPES) continue
