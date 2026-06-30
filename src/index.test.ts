@@ -1,5 +1,11 @@
 import { expect, test } from 'vitest'
-import { createWorkbook, readXlsx, writeXlsx } from './index'
+import {
+  createWorkbook,
+  type DataValidation,
+  readXlsx,
+  type TableDefinition,
+  writeXlsx,
+} from './index'
 
 test('the package exposes createWorkbook building a usable workbook', () => {
   const wb = createWorkbook()
@@ -25,4 +31,19 @@ test('the package exposes readXlsx round-tripping writeXlsx', async () => {
   wb.addSheet('S').cell('A1').value = 'hello'
   const restored = await readXlsx(await writeXlsx(wb))
   expect(restored.sheets[0]?.cell('A1').value).toBe('hello')
+})
+
+test('the package exposes the SP-5 feature surface (names, validation, tables)', async () => {
+  const wb = createWorkbook()
+  const ws = wb.addSheet('S')
+  wb.defineName('R', 'S!$A$1')
+  const dv: DataValidation = { sqref: 'A1', type: 'list', formula1: '"a,b"' }
+  ws.addDataValidation(dv)
+  const table: TableDefinition = { name: 'T', ref: 'A1:B2', columns: ['a', 'b'] }
+  ws.addTable(table)
+
+  const r = await readXlsx(await writeXlsx(wb))
+  expect(r.definedNames).toEqual([{ name: 'R', formula: 'S!$A$1' }])
+  expect(r.sheets[0]?.dataValidations[0]).toEqual(dv)
+  expect(r.sheets[0]?.tables[0]).toEqual(table)
 })

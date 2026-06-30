@@ -14,3 +14,5 @@ export type {
   HyperlinkValue,
 } from './model/cell'
 export type { CellStyle, Font, Fill, Borders, BorderEdge, Alignment } from './model/style'
+export type { DataValidation } from './model/data-validation'
+export type { TableDefinition } from './model/table'
