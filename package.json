@@ -1,6 +1,6 @@
 {
   "name": "@mitresthen/excelents",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Universal, tree-shakeable, TypeScript-first spreadsheet (xlsx/csv) library.",
   "license": "MIT",
   "files": [
