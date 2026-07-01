@@ -4,7 +4,7 @@ export default defineConfig({
   entry: ['./src/index.ts', './src/node.ts', './src/csv.ts', './src/stream.ts'],
   format: ['esm', 'cjs'],
   platform: 'neutral',
-  target: 'node20',
+  target: 'node24',
   dts: true,
   deps: { neverBundle: [/^node:/] },
   tsconfig: './tsconfig.build.json',
