@@ -10,49 +10,23 @@
   ],
   "type": "module",
   "sideEffects": false,
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "import": {
-        "types": "./dist/index.d.ts",
-        "default": "./dist/index.js"
-      },
-      "require": {
-        "types": "./dist/index.d.cts",
-        "default": "./dist/index.cjs"
-      }
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     },
     "./csv": {
-      "import": {
-        "types": "./dist/csv.d.ts",
-        "default": "./dist/csv.js"
-      },
-      "require": {
-        "types": "./dist/csv.d.cts",
-        "default": "./dist/csv.cjs"
-      }
+      "types": "./dist/csv.d.ts",
+      "default": "./dist/csv.js"
     },
     "./node": {
-      "import": {
-        "types": "./dist/node.d.ts",
-        "default": "./dist/node.js"
-      },
-      "require": {
-        "types": "./dist/node.d.cts",
-        "default": "./dist/node.cjs"
-      }
+      "types": "./dist/node.d.ts",
+      "default": "./dist/node.js"
     },
     "./stream": {
-      "import": {
-        "types": "./dist/stream.d.ts",
-        "default": "./dist/stream.js"
-      },
-      "require": {
-        "types": "./dist/stream.d.cts",
-        "default": "./dist/stream.cjs"
-      }
+      "types": "./dist/stream.d.ts",
+      "default": "./dist/stream.js"
     },
     "./package.json": "./package.json"
   },
@@ -61,7 +35,7 @@
     "provenance": true
   },
   "scripts": {
-    "build": "tsdown && node scripts/fix-exports.mjs",
+    "build": "tsdown",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "lint": "oxlint --type-aware",
     "lint:fix": "oxlint --type-aware --fix",

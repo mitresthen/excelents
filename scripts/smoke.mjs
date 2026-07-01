@@ -1,7 +1,8 @@
 /**
- * Dual-import smoke test: packs the package, installs it into a temporary
- * consumer directory, then verifies both ESM and CJS entry points resolve and
- * expose `version` as a string. Cleans up the tarball and temp dir on exit.
+ * Import smoke test: packs the package, installs it into a temporary consumer
+ * directory, then verifies the ESM entry point resolves and exposes `version`
+ * as a string. Cleans up the tarball and temp dir on exit. The package is
+ * ESM-only, so there is no CJS entry point to check.
  *
  * Usage: node scripts/smoke.mjs   (or: pnpm smoke)
  */
@@ -37,7 +38,7 @@ try {
   execFileSync('npm', ['init', '-y'], { cwd: tmpDir, stdio: 'pipe' })
   execFileSync('npm', ['install', tgzPath], { cwd: tmpDir, stdio: 'pipe' })
 
-  // Step 3a: ESM check (top-level await via --input-type=module)
+  // Step 3: ESM check (top-level await via --input-type=module)
   console.log('[smoke] checking ESM import...')
   execFileSync(
     'node',
@@ -45,17 +46,6 @@ try {
       '--input-type=module',
       '-e',
       "const m = await import('@mitresthen/excelents'); if (typeof m.version !== 'string') throw new Error('esm export missing'); console.log('esm ok')",
-    ],
-    { cwd: tmpDir, stdio: 'inherit' },
-  )
-
-  // Step 3b: CJS check
-  console.log('[smoke] checking CJS require...')
-  execFileSync(
-    'node',
-    [
-      '-e',
-      "const m = require('@mitresthen/excelents'); if (typeof m.version !== 'string') throw new Error('cjs export missing'); console.log('cjs ok')",
     ],
     { cwd: tmpDir, stdio: 'inherit' },
   )

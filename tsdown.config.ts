@@ -2,37 +2,24 @@ import { defineConfig } from 'tsdown'
 
 export default defineConfig({
   entry: ['./src/index.ts', './src/node.ts', './src/csv.ts', './src/stream.ts'],
-  format: ['esm', 'cjs'],
+  format: ['esm'],
   platform: 'neutral',
   target: 'node24',
   dts: true,
   deps: { neverBundle: [/^node:/] },
   tsconfig: './tsconfig.build.json',
   exports: {
-    // Add per-condition `types` entries so every subpath resolves declarations
-    // correctly under moduleResolution: node16 AND bundler, for both ESM and CJS.
-    // Workaround for tsdown@0.22.3 limitation — remove when fixed upstream.
+    // For a single-format (ESM) build, tsdown emits a flat `"<subpath>":
+    // "./dist/x.js"` per entry. Expand each into an explicit `{ types, default }`
+    // so declarations resolve under node16/nodenext as well as bundler resolution.
     customExports(exports) {
       for (const [key, value] of Object.entries(exports)) {
         if (key === './package.json') continue
-        if (value && typeof value === 'object' && !Array.isArray(value)) {
-          const newValue: Record<string, unknown> = {}
-          for (const [cond, distPath] of Object.entries(value)) {
-            if (cond === 'import' && typeof distPath === 'string') {
-              newValue[cond] = {
-                types: distPath.replace(/\.js$/, '.d.ts'),
-                default: distPath,
-              }
-            } else if (cond === 'require' && typeof distPath === 'string') {
-              newValue[cond] = {
-                types: distPath.replace(/\.cjs$/, '.d.cts'),
-                default: distPath,
-              }
-            } else {
-              newValue[cond] = distPath
-            }
+        if (typeof value === 'string' && value.endsWith('.js')) {
+          exports[key] = {
+            types: value.replace(/\.js$/, '.d.ts'),
+            default: value,
           }
-          exports[key] = newValue
         }
       }
       return exports
@@ -40,5 +27,5 @@ export default defineConfig({
   },
   clean: true,
   publint: 'ci-only',
-  attw: { profile: 'node16', enabled: 'ci-only' },
+  attw: { profile: 'esm-only', enabled: 'ci-only' },
 })
