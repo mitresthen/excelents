@@ -2,7 +2,13 @@
   "name": "@mitresthen/excelents",
   "version": "0.2.0",
   "description": "Universal, tree-shakeable, TypeScript-first spreadsheet (xlsx/csv) library.",
+  "homepage": "https://github.com/mitresthen/excelents#readme",
+  "bugs": "https://github.com/mitresthen/excelents/issues",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mitresthen/excelents.git"
+  },
   "files": [
     "dist",
     "LICENSE",
