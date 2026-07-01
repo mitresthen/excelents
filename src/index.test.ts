@@ -1,11 +1,20 @@
+import { readFileSync } from 'node:fs'
 import { expect, test } from 'vitest'
 import {
   createWorkbook,
   type DataValidation,
   readXlsx,
   type TableDefinition,
+  version,
   writeXlsx,
 } from './index'
+
+test('the package exports a version string kept in sync with package.json', () => {
+  expect(typeof version).toBe('string')
+  const raw = readFileSync(new URL('../package.json', import.meta.url), 'utf-8')
+  const match = /"version":\s*"([^"]+)"/.exec(raw)
+  expect(match?.[1]).toBe(version)
+})
 
 test('the package exposes createWorkbook building a usable workbook', () => {
   const wb = createWorkbook()

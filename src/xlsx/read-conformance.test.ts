@@ -18,7 +18,7 @@ test('readXlsx parses every fixture without throwing', async () => {
       expect(wb.sheets.length).toBeGreaterThanOrEqual(1)
     }
   }
-})
+}, 30000) // sweeps every fixture incl. the ~15 MB huge.xlsx — exceeds the 5s default on CI runners
 
 test('recovered primitive cell values match exceljs for a representative fixture', async () => {
   const ExcelJS = (await import('exceljs')).default
@@ -96,4 +96,4 @@ test('every fixture still parses and exposes definedNames as an array', async ()
     const wb = await readXlsx(await parseFixture(path))
     expect(Array.isArray(wb.definedNames)).toBe(true)
   }
-})
+}, 30000) // sweeps every fixture incl. the ~15 MB huge.xlsx — exceeds the 5s default on CI runners
