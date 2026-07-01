@@ -1,14 +1,32 @@
+import { base64ToBytes } from '../utils/base64'
+import type { WorkbookImage, WorkbookImageInput } from './image'
 import { Worksheet } from './worksheet'
 
 /** A workbook: an ordered collection of named worksheets. */
 export class Workbook {
   private readonly worksheets: Worksheet[] = []
   private readonly names: Array<{ name: string; formula: string; localSheetId?: number }> = []
+  private readonly mediaList: WorkbookImage[] = []
 
   addSheet(name: string): Worksheet {
     const ws = new Worksheet(name)
     this.worksheets.push(ws)
     return ws
+  }
+
+  /**
+   * Register an image on the workbook and return its id (a stable index). Accepts raw bytes
+   * or a base64 string. Place it on a sheet with `worksheet.placeImage(id, anchor)`.
+   */
+  addImage(image: WorkbookImageInput): number {
+    const data = typeof image.data === 'string' ? base64ToBytes(image.data) : image.data
+    this.mediaList.push({ data, extension: image.extension })
+    return this.mediaList.length - 1
+  }
+
+  /** Registered images, indexed by the id returned from `addImage`. */
+  get media(): readonly WorkbookImage[] {
+    return this.mediaList
   }
 
   /**

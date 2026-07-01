@@ -32,14 +32,18 @@ const VERTICAL_TO_OOXML: Record<NonNullable<Alignment['vertical']>, string> = {
 function hasAlignment(a: Alignment | undefined): a is Alignment {
   return (
     a !== undefined &&
-    (a.horizontal !== undefined || a.vertical !== undefined || a.wrapText === true)
+    (a.horizontal !== undefined ||
+      a.vertical !== undefined ||
+      a.wrapText === true ||
+      (a.indent !== undefined && a.indent > 0))
   )
 }
 
 /** Stable, key-order-independent dedup key for an alignment facet. */
 function alignmentKey(a: Alignment | undefined): string {
   if (a === undefined) return ''
-  return `h=${a.horizontal ?? ''}|v=${a.vertical ?? ''}|w=${a.wrapText === true ? '1' : ''}`
+  const indent = a.indent !== undefined && a.indent > 0 ? a.indent : ''
+  return `h=${a.horizontal ?? ''}|v=${a.vertical ?? ''}|w=${a.wrapText === true ? '1' : ''}|i=${indent}`
 }
 
 const DEFAULT_FONT: Font = { name: 'Calibri', size: 11 }
@@ -216,6 +220,7 @@ function writeAlignmentXml(w: XmlWriter, a: Alignment): void {
     horizontal: a.horizontal,
     vertical: a.vertical !== undefined ? VERTICAL_TO_OOXML[a.vertical] : undefined,
     wrapText: a.wrapText === true ? 1 : undefined,
+    indent: a.indent !== undefined && a.indent > 0 ? a.indent : undefined,
   })
 }
 

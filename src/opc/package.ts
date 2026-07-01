@@ -152,6 +152,19 @@ export class OpcPackage {
     this.overrides.set(name, contentType)
   }
 
+  /** Register a `<Default>` content type for a file extension (e.g. `png` → `image/png`). */
+  setDefault(extension: string, contentType: string): void {
+    this.defaults.set(extension.toLowerCase(), contentType)
+  }
+
+  /**
+   * Add a part whose content type is resolved by a registered `Default` extension (no per-part
+   * `Override`) — used for binary media whose extension is declared via `setDefault`.
+   */
+  addPart(name: string, data: Uint8Array): void {
+    this.parts.set(name, data)
+  }
+
   private buildContentTypes(): string {
     const w = new XmlWriter().declaration().open('Types', { xmlns: TYPES_NS })
     for (const [ext, type] of this.defaults)

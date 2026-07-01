@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { StyleRegistry } from './styles-writer'
+import { StyleRegistry, writeStylesXml } from './styles-writer'
 
 test('empty style maps to xf 0 without creating a duplicate default', () => {
   const r = new StyleRegistry()
@@ -32,6 +32,30 @@ test('alignment dedup key is insensitive to facet insertion order', () => {
   const a = r.xfIndexFor({ alignment: { horizontal: 'center', vertical: 'middle' } })
   const b = r.xfIndexFor({ alignment: { vertical: 'middle', horizontal: 'center' } })
   expect(b).toBe(a)
+})
+
+test('alignment indent is part of the xf identity', () => {
+  const r = new StyleRegistry()
+  const plain = r.xfIndexFor({ alignment: { horizontal: 'right' } })
+  const indented = r.xfIndexFor({ alignment: { horizontal: 'right', indent: 1 } })
+  expect(indented).not.toBe(plain)
+  // Same alignment incl. indent dedups.
+  expect(r.xfIndexFor({ alignment: { horizontal: 'right', indent: 1 } })).toBe(indented)
+})
+
+test('indent 0 is treated as no indent (does not split the default xf)', () => {
+  const r = new StyleRegistry()
+  expect(r.xfIndexFor({ alignment: { indent: 0 } })).toBe(0)
+  expect(r.xfs.length).toBe(1)
+})
+
+test('writeStylesXml emits the indent attribute only when > 0', () => {
+  const r = new StyleRegistry()
+  r.xfIndexFor({ alignment: { horizontal: 'right', indent: 2 } })
+  r.xfIndexFor({ alignment: { horizontal: 'left', indent: 0 } })
+  const xml = writeStylesXml(r)
+  expect(xml).toContain('indent="2"')
+  expect(xml).not.toContain('indent="0"')
 })
 
 test('mandatory fills none@0 and gray125@1 are always present', () => {

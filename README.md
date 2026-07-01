@@ -26,6 +26,30 @@ const restored = await readXlsx(bytes)
 restored.sheets[0]?.cell('A1').value // 'Hello'
 ```
 
+### Images, filters & layout
+
+Write-side helpers for report-style exports:
+
+```ts
+const ws = wb.addSheet('Report')
+
+// Freeze the first 9 header rows (optionally freeze leading columns too):
+ws.freeze({ rows: 9 })
+
+// AutoFilter over the header range:
+ws.setAutoFilter('A9:F123')
+
+// Right-align a header with an indent step:
+ws.cell('A9').style = { alignment: { horizontal: 'right', indent: 1 } }
+
+// Embed an image (bytes or base64) and anchor it, sized in pixels:
+const logo = wb.addImage({ data: pngBase64, extension: 'png' }) // -> image id
+ws.placeImage(logo, { tl: 'F1', size: { width: 180, height: 101 } })
+```
+
+`addImage` accepts a `Uint8Array` or a base64 string, and `extension` of `'png' | 'jpeg' | 'gif'`.
+These are serialization (write) features.
+
 ### CSV
 
 ```ts

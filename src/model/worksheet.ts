@@ -3,6 +3,7 @@ import type { RangeBox } from '../utils/range'
 import type { Cell, CellValue } from './cell'
 import { Column } from './column'
 import type { DataValidation } from './data-validation'
+import type { ImageAnchor, ImagePlacement } from './image'
 import { Row } from './row'
 import type { TableDefinition } from './table'
 
@@ -13,6 +14,9 @@ export class Worksheet {
   private readonly mergeRanges: string[] = []
   private readonly validations: DataValidation[] = []
   private readonly tableDefs: TableDefinition[] = []
+  private autoFilterRef: string | undefined
+  private frozenSplit: { rows: number; cols: number } | undefined
+  private readonly imagePlacements: ImagePlacement[] = []
 
   constructor(public name: string) {}
 
@@ -78,6 +82,33 @@ export class Worksheet {
 
   get tables(): readonly TableDefinition[] {
     return this.tableDefs
+  }
+
+  /** Set the sheet's AutoFilter range, e.g. `'A9:F123'`. */
+  setAutoFilter(ref: string): void {
+    this.autoFilterRef = ref
+  }
+
+  get autoFilter(): string | undefined {
+    return this.autoFilterRef
+  }
+
+  /** Freeze `rows` header rows and/or `cols` leading columns (each defaults to 0). */
+  freeze(opts: { rows?: number; cols?: number }): void {
+    this.frozenSplit = { rows: opts.rows ?? 0, cols: opts.cols ?? 0 }
+  }
+
+  get frozen(): { rows: number; cols: number } | undefined {
+    return this.frozenSplit
+  }
+
+  /** Place a workbook-registered image (by `addImage` id) at an anchor on this sheet. */
+  placeImage(imageId: number, anchor: ImageAnchor): void {
+    this.imagePlacements.push({ imageId, ...anchor })
+  }
+
+  get images(): readonly ImagePlacement[] {
+    return this.imagePlacements
   }
 
   /** The highest row number that has been touched (created via getRow/getCell), used to place addRow. */

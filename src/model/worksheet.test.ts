@@ -24,6 +24,32 @@ test('merge records ranges', () => {
   expect(ws.merges).toEqual(['A1:B2'])
 })
 
+test('placeImage records placements referencing the image id', () => {
+  const ws = new Worksheet('s')
+  ws.placeImage(0, { tl: 'F1', size: { width: 180, height: 101 } })
+  ws.placeImage(1, { tl: 'A1', size: { width: 10, height: 10 }, editAs: 'absolute' })
+  expect(ws.images).toEqual([
+    { imageId: 0, tl: 'F1', size: { width: 180, height: 101 } },
+    { imageId: 1, tl: 'A1', size: { width: 10, height: 10 }, editAs: 'absolute' },
+  ])
+})
+
+test('setAutoFilter records the ref', () => {
+  const ws = new Worksheet('s')
+  expect(ws.autoFilter).toBeUndefined()
+  ws.setAutoFilter('A9:F123')
+  expect(ws.autoFilter).toBe('A9:F123')
+})
+
+test('freeze records the split; freezing rows only defaults cols to 0', () => {
+  const ws = new Worksheet('s')
+  expect(ws.frozen).toBeUndefined()
+  ws.freeze({ rows: 9 })
+  expect(ws.frozen).toEqual({ rows: 9, cols: 0 })
+  ws.freeze({ rows: 1, cols: 2 })
+  expect(ws.frozen).toEqual({ rows: 1, cols: 2 })
+})
+
 test('dimensions spans the populated cells', () => {
   const ws = new Worksheet('s')
   ws.cell('B2').value = 'x'

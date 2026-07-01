@@ -18,3 +18,10 @@ export type {
 export type { CellStyle, Font, Fill, Borders, BorderEdge, Alignment } from './model/style'
 export type { DataValidation } from './model/data-validation'
 export type { TableDefinition } from './model/table'
+export type {
+  ImageExtension,
+  WorkbookImageInput,
+  WorkbookImage,
+  ImageAnchor,
+  ImagePlacement,
+} from './model/image'

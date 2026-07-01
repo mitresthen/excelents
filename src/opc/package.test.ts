@@ -34,6 +34,15 @@ test('getPart returns a defensive copy: mutating the result does not affect subs
   expect(second[0]).not.toBe(0xff)
 })
 
+test('setDefault + addPart: media resolves via the Default content type (no Override)', async () => {
+  const pkg = OpcPackage.empty()
+  pkg.setDefault('png', 'image/png')
+  pkg.addPart('xl/media/image1.png', new Uint8Array([1, 2, 3]))
+  const rt = await OpcPackage.read(await pkg.toBytes())
+  expect(Array.from(rt.getPart('xl/media/image1.png')!)).toEqual([1, 2, 3])
+  expect(rt.contentTypeOf('xl/media/image1.png')).toBe('image/png')
+})
+
 async function buildMinimal(): Promise<Uint8Array> {
   // Construct a minimal package via setPart + toBytes, then return its bytes.
   const { OpcPackage: P } = await import('./package')

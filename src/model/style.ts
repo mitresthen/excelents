@@ -31,6 +31,8 @@ export interface Alignment {
   horizontal?: 'left' | 'center' | 'right'
   vertical?: 'top' | 'middle' | 'bottom'
   wrapText?: boolean
+  /** Number of indent steps (non-negative). Emitted only when > 0. */
+  indent?: number
 }
 
 /** A cell's visual style. All facets optional; `numberFormat` is a format code. */

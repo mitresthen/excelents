@@ -1,7 +1,9 @@
 import type { Cell, FormulaValue } from '../model/cell'
+import type { ImagePlacement } from '../model/image'
 import type { CellStyle } from '../model/style'
 import type { TableDefinition } from '../model/table'
 import type { Worksheet } from '../model/worksheet'
+import { encodeAddress } from '../utils/address'
 import { dateToSerial } from '../utils/date'
 import { encodeRange } from '../utils/range'
 import type { SharedStrings } from '../utils/shared-strings'
@@ -23,11 +25,13 @@ interface PendingHyperlink {
   target: string
 }
 
-/** A worksheet's serialized XML plus the relationships (hyperlinks, tables) it references. */
+/** A worksheet's serialized XML plus the relationships (hyperlinks, tables, drawing) it references. */
 export interface WorksheetWriteResult {
   readonly xml: string
   readonly hyperlinks: ReadonlyArray<{ rid: string; target: string }>
   readonly tables: ReadonlyArray<{ rid: string; table: TableDefinition }>
+  /** The sheet's drawing part reference (its rId + placements), when the sheet has images. */
+  readonly drawing?: { rid: string; placements: readonly ImagePlacement[] }
 }
 
 /** The style under which a value is rendered — Date cells force a date number-format. */
@@ -137,6 +141,25 @@ export function writeWorksheetXml(
   const dims = ws.dimensions
   if (dims !== undefined) w.leaf('dimension', { ref: encodeRange(dims) })
 
+  // sheetViews (frozen panes) follows dimension and precedes cols per CT_Worksheet.
+  const frozen = ws.frozen
+  if (frozen !== undefined && (frozen.rows > 0 || frozen.cols > 0)) {
+    const { rows: ySplit, cols: xSplit } = frozen
+    const topLeftCell = encodeAddress(ySplit + 1, xSplit + 1)
+    const activePane =
+      xSplit > 0 && ySplit > 0 ? 'bottomRight' : xSplit > 0 ? 'topRight' : 'bottomLeft'
+    w.open('sheetViews').open('sheetView', { workbookViewId: 0 })
+    w.leaf('pane', {
+      xSplit: xSplit > 0 ? xSplit : undefined,
+      ySplit: ySplit > 0 ? ySplit : undefined,
+      topLeftCell,
+      activePane,
+      state: 'frozen',
+    })
+    w.leaf('selection', { pane: activePane, activeCell: topLeftCell, sqref: topLeftCell })
+    w.close('sheetView').close('sheetViews')
+  }
+
   // cols precedes sheetData per the CT_Worksheet schema sequence.
   const cols = ws.columns.filter((c) => c.width !== undefined)
   if (cols.length > 0) {
@@ -159,6 +182,9 @@ export function writeWorksheetXml(
     w.close('row')
   }
   w.close('sheetData')
+
+  // autoFilter follows sheetData and precedes mergeCells per the CT_Worksheet sequence.
+  if (ws.autoFilter !== undefined) w.leaf('autoFilter', { ref: ws.autoFilter })
 
   // mergeCells follows sheetData per the CT_Worksheet schema sequence.
   const merges = ws.merges
@@ -200,10 +226,21 @@ export function writeWorksheetXml(
     w.close('hyperlinks')
   }
 
+  const wsTables = ws.tables
+
+  // drawing precedes tableParts per the CT_Worksheet sequence. Its rId is allocated past the
+  // hyperlink and table rIds so all of a sheet's relationships share one numbering.
+  let drawing: WorksheetWriteResult['drawing']
+  const images = ws.images
+  if (images.length > 0) {
+    const rid = `rId${pending.length + wsTables.length + 1}`
+    w.leaf('drawing', { 'r:id': rid })
+    drawing = { rid, placements: images }
+  }
+
   // tableParts close the worksheet; their rIds continue past the hyperlink rIds so all of a
   // sheet's relationships share one numbering in its .rels part.
   const tableRels: Array<{ rid: string; table: TableDefinition }> = []
-  const wsTables = ws.tables
   if (wsTables.length > 0) {
     w.open('tableParts', { count: wsTables.length })
     wsTables.forEach((table, i) => {
@@ -215,5 +252,5 @@ export function writeWorksheetXml(
   }
 
   w.close('worksheet')
-  return { xml: w.toString(), hyperlinks: rels, tables: tableRels }
+  return { xml: w.toString(), hyperlinks: rels, tables: tableRels, drawing }
 }

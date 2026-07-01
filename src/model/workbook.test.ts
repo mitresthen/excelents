@@ -1,6 +1,17 @@
 import { expect, test } from 'vitest'
 import { createWorkbook } from './workbook'
 
+test('addImage registers media with sequential ids; base64 decodes, bytes pass through', () => {
+  const wb = createWorkbook()
+  const id0 = wb.addImage({ data: 'aGk=', extension: 'png' }) // "hi"
+  const id1 = wb.addImage({ data: new Uint8Array([1, 2, 3]), extension: 'jpeg' })
+  expect([id0, id1]).toEqual([0, 1])
+  expect(wb.media.length).toBe(2)
+  expect(Array.from(wb.media[0]!.data)).toEqual([0x68, 0x69])
+  expect(wb.media[0]!.extension).toBe('png')
+  expect(Array.from(wb.media[1]!.data)).toEqual([1, 2, 3])
+})
+
 test('createWorkbook starts with no sheets', () => {
   expect(createWorkbook().sheets).toEqual([])
 })
