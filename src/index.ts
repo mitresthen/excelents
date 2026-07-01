@@ -1,5 +1,5 @@
 /** The package version, kept in sync with package.json (asserted by src/index.test.ts). */
-export const version: string = '0.0.0'
+export const version: string = '0.1.0'
 export { createWorkbook, Workbook } from './model/workbook'
 export { writeXlsx } from './xlsx/write'
 export { readXlsx } from './xlsx/read'
