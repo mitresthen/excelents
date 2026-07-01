@@ -47,12 +47,12 @@ jobs:
       - name: Check shipped .d.ts resolves on TypeScript ${{ matrix.ts }}
         run: |
           pnpm pack
-          TARBALL=$(ls excelents-*.tgz | head -1)
+          TARBALL=$(ls mitresthen-excelents-*.tgz | head -1)
           CONSUMER=$(mktemp -d)
           cd "$CONSUMER"
           npm init -y
           npm install "$OLDPWD/$TARBALL" typescript@${{ matrix.ts }}
-          printf 'import { version } from "excelents"\nconst v: string = version\n' > consumer.ts
+          printf 'import { version } from "@mitresthen/excelents"\nconst v: string = version\n' > consumer.ts
           npx tsc --noEmit --moduleResolution bundler --module esnext consumer.ts
           cd "$OLDPWD"
           rm -rf "$CONSUMER" "$TARBALL"

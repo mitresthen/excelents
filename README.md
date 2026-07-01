@@ -7,13 +7,13 @@ so it runs the same in Node, browsers, and edge runtimes.
 ## Install
 
 ```sh
-npm install excelents
+npm install @mitresthen/excelents
 ```
 
 ## Quick start
 
 ```ts
-import { createWorkbook, writeXlsx, readXlsx } from 'excelents'
+import { createWorkbook, writeXlsx, readXlsx } from '@mitresthen/excelents'
 
 const wb = createWorkbook()
 const ws = wb.addSheet('Sheet1')
@@ -29,13 +29,13 @@ restored.sheets[0]?.cell('A1').value // 'Hello'
 ### CSV
 
 ```ts
-import { writeCsv, readCsv } from 'excelents/csv'
+import { writeCsv, readCsv } from '@mitresthen/excelents/csv'
 
 const csv = writeCsv(wb) // RFC 4180 string (pass a Workbook or a Worksheet)
 const parsed = readCsv('name,qty\nwidget,42') // -> Workbook
 ```
 
-## Streaming (`excelents/stream`)
+## Streaming (`@mitresthen/excelents/stream`)
 
 For large spreadsheets, the `./stream` entry produces and consumes rows incrementally, so memory
 stays **bounded regardless of file size**. It's a separate, tree-shakeable entry that does not pull
@@ -46,7 +46,7 @@ in the buffered codecs.
 Functional form — `rows` is any (async) iterable of cell-value arrays:
 
 ```ts
-import { writeXlsxStream } from 'excelents/stream'
+import { writeXlsxStream } from '@mitresthen/excelents/stream'
 
 async function* rows() {
   yield ['name', 'qty']
@@ -60,7 +60,7 @@ const stream: ReadableStream<Uint8Array> = writeXlsxStream(rows(), { sheet: 'Dat
 Builder form — push rows imperatively; awaiting `addRow` applies backpressure:
 
 ```ts
-import { createXlsxStreamWriter } from 'excelents/stream'
+import { createXlsxStreamWriter } from '@mitresthen/excelents/stream'
 
 const writer = createXlsxStreamWriter({ sheet: 'Data' })
 // writer.readable: ReadableStream<Uint8Array>
@@ -75,7 +75,7 @@ await writer.close()
 a `Uint8Array`, a `Blob`, or a `ReadableStream<Uint8Array>`:
 
 ```ts
-import { readXlsxRows } from 'excelents/stream'
+import { readXlsxRows } from '@mitresthen/excelents/stream'
 
 for await (const { sheet, rowNumber, cells } of readXlsxRows(bytes)) {
   // cells: CellValue[] indexed by column (index 0 = column A)
@@ -86,7 +86,7 @@ for await (const { sheet, rowNumber, cells } of readXlsxRows(bytes)) {
 ### Streaming CSV
 
 ```ts
-import { writeCsvStream, readCsvRows } from 'excelents/stream'
+import { writeCsvStream, readCsvRows } from '@mitresthen/excelents/stream'
 
 const csvStream = writeCsvStream(rows()) // ReadableStream<Uint8Array>
 
@@ -99,10 +99,10 @@ for await (const row of readCsvRows(csvStream)) {
 
 | Import | Contents |
 | --- | --- |
-| `excelents` | `createWorkbook`, `writeXlsx`, `readXlsx`, the model classes, and `version` |
-| `excelents/csv` | `writeCsv`, `readCsv` |
-| `excelents/stream` | `writeXlsxStream`, `createXlsxStreamWriter`, `readXlsxRows`, `writeCsvStream`, `readCsvRows` |
-| `excelents/node` | Node filesystem helpers |
+| `@mitresthen/excelents` | `createWorkbook`, `writeXlsx`, `readXlsx`, the model classes, and `version` |
+| `@mitresthen/excelents/csv` | `writeCsv`, `readCsv` |
+| `@mitresthen/excelents/stream` | `writeXlsxStream`, `createXlsxStreamWriter`, `readXlsxRows`, `writeCsvStream`, `readCsvRows` |
+| `@mitresthen/excelents/node` | Node filesystem helpers |
 
 ## License
 

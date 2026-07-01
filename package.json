@@ -1,5 +1,5 @@
 {
-  "name": "excelents",
+  "name": "@mitresthen/excelents",
   "version": "0.0.0",
   "description": "Universal, tree-shakeable, TypeScript-first spreadsheet (xlsx/csv) library.",
   "license": "MIT",
@@ -56,6 +56,10 @@
     },
     "./package.json": "./package.json"
   },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
   "scripts": {
     "build": "tsdown && node scripts/fix-exports.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json",
@@ -66,6 +70,7 @@
     "test": "vitest run",
     "size": "node scripts/size.mjs",
     "smoke": "node scripts/smoke.mjs",
+    "version": "node scripts/sync-version.mjs && git add src/index.ts",
     "prepublishOnly": "pnpm build"
   },
   "devDependencies": {

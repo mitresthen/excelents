@@ -15,7 +15,7 @@ const root = resolve(fileURLToPath(import.meta.url), '..', '..')
 
 // Step 1: clean up any pre-existing tarballs
 readdirSync(root)
-  .filter((f) => f.startsWith('excelents-') && f.endsWith('.tgz'))
+  .filter((f) => f.startsWith('mitresthen-excelents-') && f.endsWith('.tgz'))
   .forEach((f) => rmSync(join(root, f), { force: true }))
 
 // Step 2: pack
@@ -23,7 +23,9 @@ console.log('[smoke] packing...')
 execFileSync('pnpm', ['pack'], { cwd: root, encoding: 'utf-8' })
 
 // Step 3: find the tarball by glob pattern (robust, not dependent on pnpm stdout)
-const tgzName = readdirSync(root).find((f) => f.startsWith('excelents-') && f.endsWith('.tgz'))
+const tgzName = readdirSync(root).find(
+  (f) => f.startsWith('mitresthen-excelents-') && f.endsWith('.tgz'),
+)
 if (!tgzName) throw new Error('pnpm pack did not produce a tarball')
 const tgzPath = join(root, tgzName)
 console.log(`[smoke] tarball: ${tgzName}`)
@@ -42,7 +44,7 @@ try {
     [
       '--input-type=module',
       '-e',
-      "const m = await import('excelents'); if (typeof m.version !== 'string') throw new Error('esm export missing'); console.log('esm ok')",
+      "const m = await import('@mitresthen/excelents'); if (typeof m.version !== 'string') throw new Error('esm export missing'); console.log('esm ok')",
     ],
     { cwd: tmpDir, stdio: 'inherit' },
   )
@@ -53,7 +55,7 @@ try {
     'node',
     [
       '-e',
-      "const m = require('excelents'); if (typeof m.version !== 'string') throw new Error('cjs export missing'); console.log('cjs ok')",
+      "const m = require('@mitresthen/excelents'); if (typeof m.version !== 'string') throw new Error('cjs export missing'); console.log('cjs ok')",
     ],
     { cwd: tmpDir, stdio: 'inherit' },
   )
