@@ -60,9 +60,8 @@ test('embedded image round-trips through exceljs (anchor, size, media)', async (
   // F1 -> col 5, row 0 (0-indexed)
   expect(images[0]?.range.tl.nativeCol).toBe(5)
   expect(images[0]?.range.tl.nativeRow).toBe(0)
-  // exceljs's ImageRange type omits `ext`, which is present at runtime for a oneCellAnchor.
-  const range = images[0]?.range as { ext?: { width: number; height: number } }
-  expect(range.ext).toEqual({ width: 180, height: 101 })
+  // @ts-expect-error -- exceljs's ImageRange type omits `ext`, present at runtime for a oneCellAnchor.
+  expect(images[0]?.range.ext).toEqual({ width: 180, height: 101 })
   expect(oracle.model.media.length).toBe(1)
 })
 
