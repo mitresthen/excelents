@@ -367,7 +367,8 @@ streaming.
 
 **Is the API stable?**
 It's pre-1.0: the API is small and settling, but minor versions may still contain breaking
-changes. Pin a version and read release notes when bumping.
+changes. Pin a version, and check the [CHANGELOG](./CHANGELOG.md) and
+[GitHub Releases](https://github.com/mitresthen/excelents/releases) when bumping.
 
 ## Roadmap
 
