@@ -1,10 +1,15 @@
 # Changelog
 
 Notable changes to `@mitresthen/excelents`. The format follows
-[Keep a Changelog](https://keepachangelog.com/); pre-1.0, minor versions may contain breaking
-changes. GitHub Releases carry the full generated notes for each tag.
+[Keep a Changelog](https://keepachangelog.com/) and the project follows
+[semver](https://semver.org/) — breaking changes only in major versions. GitHub Releases carry
+the full generated notes for each tag.
 
 ## [Unreleased]
+
+## [1.0.0] — 2026-07-02
+
+First stable release: the public API is now covered by semver.
 
 ### Added
 
@@ -51,7 +56,8 @@ were the ExcelJS-era codebase). TypeScript-first, zero runtime dependencies, web
 - Node adapter on the `./node` entry: `nodeFileSystem`.
 - npm trusted publishing (OIDC) with provenance.
 
-[Unreleased]: https://github.com/mitresthen/excelents/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/mitresthen/excelents/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/mitresthen/excelents/compare/v0.3.0...v1.0.0
 [0.3.0]: https://github.com/mitresthen/excelents/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/mitresthen/excelents/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/mitresthen/excelents/releases/tag/v0.1.0

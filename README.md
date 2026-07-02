@@ -373,9 +373,10 @@ works row-by-row with plain values. Reports → buffered; exports/imports of mil
 streaming.
 
 **Is the API stable?**
-It's pre-1.0: the API is small and settling, but minor versions may still contain breaking
-changes. Pin a version, and check the [CHANGELOG](./CHANGELOG.md) and
-[GitHub Releases](https://github.com/mitresthen/excelents/releases) when bumping.
+Yes — since 1.0.0 the package follows semver: breaking changes only land in major versions.
+Roadmap features (conditional formatting, write-side read-back) arrive as minors. See the
+[CHANGELOG](./CHANGELOG.md) and
+[GitHub Releases](https://github.com/mitresthen/excelents/releases).
 
 ## Roadmap
 
@@ -383,7 +384,6 @@ changes. Pin a version, and check the [CHANGELOG](./CHANGELOG.md) and
 - Write-path performance (currently slower than ExcelJS — see [Performance](#performance))
 - Honor the legacy `date1904` workbook flag on read
 - Parse the write-side features (images, frozen panes, autoFilter, indent) back out on read
-- v1.0: API freeze + packaging polish
 
 ## Contributing
 
