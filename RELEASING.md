@@ -7,20 +7,22 @@ secret to manage.
 ## Cutting a release
 
 1. Be on `master` with a clean tree and CI green.
-2. Bump the version — this also rewrites the `version` export in `src/index.ts`
+2. Update `CHANGELOG.md`: retitle the `[Unreleased]` section to the new version + date,
+   start a fresh empty `[Unreleased]`, and update the compare links at the bottom. Commit.
+3. Bump the version — this also rewrites the `version` export in `src/index.ts`
    (via the `version` npm script → `scripts/sync-version.mjs`) and commits + tags:
 
    ```sh
    npm version patch   # or: minor | major
    ```
 
-3. Push the commit and the tag:
+4. Push the commit and the tag:
 
    ```sh
    git push --follow-tags
    ```
 
-4. Create a GitHub Release for the new `vX.Y.Z` tag
+5. Create a GitHub Release for the new `vX.Y.Z` tag
    (`gh release create vX.Y.Z --generate-notes`, or the web UI).
 
 Publishing the release triggers `.github/workflows/publish.yml`, which reinstalls,

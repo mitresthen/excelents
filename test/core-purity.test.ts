@@ -14,10 +14,10 @@ function tsFiles(dir: string): string[] {
   return out
 }
 
-test('core src (except src/node.ts) imports no node: builtin', () => {
+test('core src (except the node.ts adapter and migrate.ts CLI) imports no node: builtin', () => {
   const offenders: string[] = []
   for (const file of tsFiles(SRC)) {
-    if (file.endsWith('/node.ts')) continue
+    if (file.endsWith('/node.ts') || file.endsWith('/migrate.ts')) continue
     const src = readFileSync(file, 'utf8')
     if (
       /from\s+['"]node:/.test(src) ||

@@ -1,7 +1,23 @@
 {
   "name": "@mitresthen/excelents",
-  "version": "0.3.0",
+  "version": "1.0.0",
   "description": "Universal, tree-shakeable, TypeScript-first spreadsheet (xlsx/csv) library.",
+  "keywords": [
+    "browser",
+    "csv",
+    "esm",
+    "excel",
+    "exceljs",
+    "ooxml",
+    "spreadsheet",
+    "streaming",
+    "typescript",
+    "web-streams",
+    "workbook",
+    "worksheet",
+    "xlsx",
+    "zero-dependencies"
+  ],
   "homepage": "https://github.com/mitresthen/excelents#readme",
   "bugs": "https://github.com/mitresthen/excelents/issues",
   "license": "MIT",
@@ -9,7 +25,11 @@
     "type": "git",
     "url": "git+https://github.com/mitresthen/excelents.git"
   },
+  "bin": {
+    "excelents-migrate": "./bin/excelents-migrate.mjs"
+  },
   "files": [
+    "bin",
     "dist",
     "LICENSE",
     "README.md"
@@ -25,6 +45,10 @@
     "./csv": {
       "types": "./dist/csv.d.ts",
       "default": "./dist/csv.js"
+    },
+    "./migrate": {
+      "types": "./dist/migrate.d.ts",
+      "default": "./dist/migrate.js"
     },
     "./node": {
       "types": "./dist/node.d.ts",
@@ -47,7 +71,9 @@
     "lint:fix": "oxlint --type-aware --fix",
     "format": "oxfmt --check .",
     "format:fix": "oxfmt .",
-    "test": "vitest run",
+    "test": "vitest run --project node",
+    "test:browser": "vitest run --project browser",
+    "bench": "node bench/bench.mjs",
     "size": "node scripts/size.mjs",
     "smoke": "node scripts/smoke.mjs",
     "version": "node scripts/sync-version.mjs && git add src/index.ts",
@@ -56,11 +82,12 @@
   "devDependencies": {
     "@arethetypeswrong/cli": "0.18.4",
     "@types/node": "^22.0.0",
-    "@vitest/browser": "4.1.9",
+    "@vitest/browser-playwright": "^4.1.9",
     "exceljs": "4.4.0",
     "oxfmt": "0.56.0",
     "oxlint": "1.71.0",
     "oxlint-tsgolint": "0.23.0",
+    "playwright": "1.61.1",
     "publint": "0.3.21",
     "tsdown": "0.22.3",
     "typescript": "7.0.1-rc",

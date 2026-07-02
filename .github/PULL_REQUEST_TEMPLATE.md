@@ -1,13 +1,9 @@
-<!-- Thanks for submitting a pull request! Please provide enough information so that others can review your pull request. The two fields below are mandatory. -->
+<!-- Thanks for contributing! -->
 
 ## Summary
 
-<!-- Explain the **motivation** for making this change. What existing problem does the pull request solve? -->
+<!-- What does this change, and why? -->
 
 ## Test plan
 
-<!-- Demonstrate the code is solid. Example: The exact commands you ran and their output, screenshots / videos if the pull request changes UI. -->
-
-## Related to source code (for typings update)
-
-<!-- List with permalink into source code to prove that changes are true -->
+<!-- How is it verified? New/changed tests, and `pnpm test` / `pnpm typecheck` / `pnpm lint` output. Codec changes (xlsx/csv/zip/xml) should be covered by the conformance suite where possible. -->

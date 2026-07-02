@@ -1,18 +1,15 @@
 ---
-name: 🚀 Feature Proposal
-title: '[F] XYZ'
-labels: ':rocket: Feature Request'
-about: Submit a proposal for a new feature
+name: 🚀 Feature request
+about: Propose new functionality
+labels: enhancement
 ---
 
-## 🚀 Feature Proposal
+## What feature, and why?
 
-A clear and concise description of what the feature is.
+<!-- What are you trying to build that you currently can't? If it's an OOXML feature the README lists as dropped (comments, pivot tables, encryption, page setup, protection), say so — that's useful signal for reconsidering. -->
 
-## Motivation
+## Proposed API
 
-Please outline the motivation for the proposal.
-
-## Example
-
-Please provide an example for how this feature would be used.
+```ts
+// how you'd want to write it
+```
