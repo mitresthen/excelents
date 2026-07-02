@@ -68,7 +68,7 @@ export class Worksheet {
    * carried only by the master would render over one grid position.
    */
   merge(range: string): void {
-    this.mergeRanges.push(range)
+    this.recordMerge(range)
     const box = decodeRange(range)
     const master = this.getCell(box.top, box.left)
     for (let r = box.top; r <= box.bottom; r += 1) {
@@ -77,6 +77,17 @@ export class Worksheet {
         this.getCell(r, c).style = master.style
       }
     }
+  }
+
+  /**
+   * Record a merged range WITHOUT touching covered-cell styles. This is the
+   * xlsx reader's entry: files carry each covered cell's own style index
+   * (e.g. distinct border xfs on a merge's edges), and `<mergeCells>` appears
+   * after `<sheetData>` — propagating the master's style here would clobber
+   * styles that were just parsed. ExcelJS's reader preserves them the same way.
+   */
+  recordMerge(range: string): void {
+    this.mergeRanges.push(range)
   }
 
   get merges(): readonly string[] {

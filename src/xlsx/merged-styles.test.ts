@@ -80,3 +80,26 @@ test('a styled blank cell round-trips through readXlsx', async () => {
   expect(cell?.value).toBeNull()
   expect(cell?.style.fill).toEqual(BLUE)
 })
+
+test('reading a merge does not clobber covered cells that carry their own style', async () => {
+  // Excel writes each covered cell of a merge with its own xf (per-edge borders
+  // are the common case). The reader must keep those parsed styles: <mergeCells>
+  // appears after <sheetData>, so propagating the master's style on read would
+  // overwrite them. ExcelJS's reader preserves them the same way (verified).
+  const ExcelJS = (await import('exceljs')).default
+  const src = new ExcelJS.Workbook()
+  const ws = src.addWorksheet('S')
+  ws.mergeCells('A1:B1')
+  ws.getCell('A1').fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFF0000' } }
+  // a fresh style object breaks exceljs's master/covered sharing -> distinct xf for B1
+  ws.getCell('B1').style = {
+    fill: { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0000FF' } },
+  }
+  const bytes = new Uint8Array(await src.xlsx.writeBuffer())
+
+  const wb = await readXlsx(bytes)
+  const sheet = wb.sheets[0]!
+  expect(sheet.merges).toContain('A1:B1')
+  expect(sheet.cell('A1').style.fill?.fgColor).toBe('FFFF0000')
+  expect(sheet.cell('B1').style.fill?.fgColor).toBe('FF0000FF') // preserved, not clobbered
+})

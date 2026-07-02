@@ -160,7 +160,8 @@ export function readWorksheetInto(ws: Worksheet, xml: string, ctx: ReadContext):
       else if (tok.name === 't') inT = !tok.selfClosing
       else if (tok.name === 'mergeCell') {
         const mref = tok.attributes['ref']
-        if (mref !== undefined) ws.merge(mref)
+        // recordMerge, not merge(): parsed covered cells keep their own styles.
+        if (mref !== undefined) ws.recordMerge(mref)
       } else if (tok.name === 'col') {
         const width = tok.attributes['width']
         const min = Number(tok.attributes['min'])
