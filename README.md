@@ -293,15 +293,16 @@ The package ships **ESM only** (since v0.2.0). If you're on CommonJS, use dynami
 `excelents` began as a fork of `exceljs@4.4.0` (unmaintained upstream since 2023) and was
 rewritten from scratch: new architecture, new public API, no CommonJS, no dependencies. It is
 **not a drop-in replacement**, but the model maps closely and correctness is continuously verified
-against ExcelJS itself.
+against ExcelJS itself. The complete mapping — including style-model subsets and behavioral
+gotchas — is in the **[migration guide](./docs/MIGRATING-FROM-EXCELJS.md)**; the short version
+follows.
 
 ### What's supported
 
 Cell values (strings, numbers, booleans, dates, formulas with cached results, rich text,
 hyperlinks) · styling (fonts, fills, borders, alignment, number formats) · merged cells · row
 heights & column widths · tables · data validation · defined names · frozen panes, autoFilter,
-alignment indent & embedded images (write-side) · 1900/1904 date systems · CSV · streaming
-read/write.
+alignment indent & embedded images (write-side) · CSV · streaming read/write.
 
 ### What was dropped from the fork
 
@@ -372,8 +373,8 @@ changes. Pin a version and read release notes when bumping.
 
 - Conditional formatting (write + read)
 - Write-path performance (currently slower than ExcelJS — see [Performance](#performance))
-- Reading embedded images back out of workbooks
-- An ExcelJS migration guide covering every mapping
+- Honor the legacy `date1904` workbook flag on read
+- Parse the write-side features (images, frozen panes, autoFilter, indent) back out on read
 - v1.0: API freeze + packaging polish
 
 ## Contributing
