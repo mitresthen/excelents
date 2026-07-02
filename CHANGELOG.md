@@ -8,6 +8,9 @@ changes. GitHub Releases carry the full generated notes for each tag.
 
 ### Added
 
+- `excelents-migrate` — an ExcelJS-usage scanner (`npx @mitresthen/excelents [path] [--json]`)
+  that buckets call sites into auto-mappable / needs-restructuring / no-equivalent, with
+  migration-guide pointers; also importable from `@mitresthen/excelents/migrate`.
 - Browser test suite (Vitest browser mode, Chromium) run in CI.
 - `bench/` — reproducible excelents-vs-exceljs benchmark (`pnpm bench`); results in the README.
 - ExcelJS migration guide (`docs/MIGRATING-FROM-EXCELJS.md`).

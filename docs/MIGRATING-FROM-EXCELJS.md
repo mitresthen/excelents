@@ -4,6 +4,25 @@
 concept to its excelents equivalent, lists what has no equivalent, and calls out behavioral
 differences that can bite silently.
 
+## Sizing your migration
+
+Before reading further, let the scanner inventory your codebase:
+
+```sh
+npx @mitresthen/excelents .          # human-readable report
+npx @mitresthen/excelents . --json   # machine-readable, for tooling/agents
+```
+
+It scans for ExcelJS usage and buckets every call site: **auto-mappable** (mechanical renames,
+listed with their new name), **needs restructuring** (same capability, different shape — each
+points at a section of this guide), and **no equivalent** (dropped features — decide on these
+first). It never modifies files. The scanner is also importable — `scanSource` from
+`@mitresthen/excelents/migrate` — if you're building tooling on top.
+
+**Migrating with a coding agent?** Point it at this guide plus the `--json` scanner output; the
+combination is designed to give an agent everything it needs — the inventory of sites and the
+exact mapping for each.
+
 ## The three big conceptual changes
 
 **1. Serialization is free functions, not workbook methods.**

@@ -25,7 +25,11 @@
     "type": "git",
     "url": "git+https://github.com/mitresthen/excelents.git"
   },
+  "bin": {
+    "excelents-migrate": "./bin/excelents-migrate.mjs"
+  },
   "files": [
+    "bin",
     "dist",
     "LICENSE",
     "README.md"
@@ -41,6 +45,10 @@
     "./csv": {
       "types": "./dist/csv.d.ts",
       "default": "./dist/csv.js"
+    },
+    "./migrate": {
+      "types": "./dist/migrate.d.ts",
+      "default": "./dist/migrate.js"
     },
     "./node": {
       "types": "./dist/node.d.ts",

@@ -297,6 +297,13 @@ against ExcelJS itself. The complete mapping — including style-model subsets a
 gotchas — is in the **[migration guide](./docs/MIGRATING-FROM-EXCELJS.md)**; the short version
 follows.
 
+Start by scanning your codebase — it reports every ExcelJS call site as auto-mappable, needing
+restructuring, or without an equivalent (add `--json` for tooling and coding agents):
+
+```sh
+npx @mitresthen/excelents .
+```
+
 ### What's supported
 
 Cell values (strings, numbers, booleans, dates, formulas with cached results, rich text,
