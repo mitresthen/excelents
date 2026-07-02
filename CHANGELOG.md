@@ -7,12 +7,21 @@ the full generated notes for each tag.
 
 ## [Unreleased]
 
+## [1.0.1] — 2026-07-02
+
 ### Fixed
 
+- Merged ranges now paint fully: `merge()` materializes every covered cell sharing the
+  master's style object (ExcelJS semantics — style the master before or after merging), and
+  `addRow` lands below merged blocks. The reader keeps covered cells' own parsed styles
+  (per-edge borders survive round-trips). (#2)
+- Value-less styled cells (spacer rows, fills across merges) are written as
+  `<c r=".." s="N"/>` like ExcelJS instead of being dropped, and round-trip through
+  `readXlsx`. (#2)
 - `readXlsx` and `readXlsxRows` now honor `<workbookPr date1904="1"/>`: dates in workbooks
   saved with the legacy Mac 1904 date system no longer read back ~4 years off. Writes still
   emit the standard 1900 system — since the model stores real `Date` objects, round-tripping
-  a 1904 workbook preserves the instants while normalizing the file to 1900.
+  a 1904 workbook preserves the instants while normalizing the file to 1900. (#3)
 
 ## [1.0.0] — 2026-07-02
 
@@ -63,7 +72,8 @@ were the ExcelJS-era codebase). TypeScript-first, zero runtime dependencies, web
 - Node adapter on the `./node` entry: `nodeFileSystem`.
 - npm trusted publishing (OIDC) with provenance.
 
-[Unreleased]: https://github.com/mitresthen/excelents/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/mitresthen/excelents/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/mitresthen/excelents/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/mitresthen/excelents/compare/v0.3.0...v1.0.0
 [0.3.0]: https://github.com/mitresthen/excelents/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/mitresthen/excelents/compare/v0.1.0...v0.2.0
