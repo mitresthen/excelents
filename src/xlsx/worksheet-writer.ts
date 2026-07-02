@@ -50,7 +50,16 @@ function writeCellValue(
   hyperlinks: PendingHyperlink[],
 ): void {
   const v = cell.value
-  if (v === null) return
+  if (v === null) {
+    // A value-less cell still occupies the grid when it carries a style —
+    // fills across merged ranges, spacer rows, etc. Emit `<c r=".." s="N"/>`
+    // like exceljs; a blank cell with the default style stays unwritten.
+    if (registry !== undefined) {
+      const blankXf = registry.xfIndexFor(cell.style)
+      if (blankXf > 0) w.leaf('c', { r: cell.address, s: blankXf })
+    }
+    return
+  }
   const xfIndex = registry !== undefined ? registry.xfIndexFor(effectiveStyle(v, cell.style)) : 0
   const s = xfIndex > 0 ? xfIndex : undefined
   if (typeof v === 'string') {

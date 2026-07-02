@@ -1,5 +1,5 @@
 import { decodeAddress } from '../utils/address'
-import type { RangeBox } from '../utils/range'
+import { decodeRange, type RangeBox } from '../utils/range'
 import type { Cell, CellValue } from './cell'
 import { Column } from './column'
 import type { DataValidation } from './data-validation'
@@ -60,7 +60,33 @@ export class Worksheet {
     return [...this.cols.keys()].sort((a, b) => a - b).map((n) => this.cols.get(n)!)
   }
 
+  /**
+   * Merge a range, e.g. `'A1:F1'`. Every covered cell is materialized and
+   * SHARES the master's (top-left) style object, so styling the master —
+   * before or after merging — styles the whole range. This matches exceljs:
+   * spreadsheet apps paint each underlying cell of a merged range, so a fill
+   * carried only by the master would render over one grid position.
+   */
   merge(range: string): void {
+    this.recordMerge(range)
+    const box = decodeRange(range)
+    const master = this.getCell(box.top, box.left)
+    for (let r = box.top; r <= box.bottom; r += 1) {
+      for (let c = box.left; c <= box.right; c += 1) {
+        if (r === box.top && c === box.left) continue
+        this.getCell(r, c).style = master.style
+      }
+    }
+  }
+
+  /**
+   * Record a merged range WITHOUT touching covered-cell styles. This is the
+   * xlsx reader's entry: files carry each covered cell's own style index
+   * (e.g. distinct border xfs on a merge's edges), and `<mergeCells>` appears
+   * after `<sheetData>` — propagating the master's style here would clobber
+   * styles that were just parsed. ExcelJS's reader preserves them the same way.
+   */
+  recordMerge(range: string): void {
     this.mergeRanges.push(range)
   }
 
