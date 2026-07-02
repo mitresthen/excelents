@@ -65,6 +65,7 @@
     "format:fix": "oxfmt .",
     "test": "vitest run --project node",
     "test:browser": "vitest run --project browser",
+    "bench": "node bench/bench.mjs",
     "size": "node scripts/size.mjs",
     "smoke": "node scripts/smoke.mjs",
     "version": "node scripts/sync-version.mjs && git add src/index.ts",

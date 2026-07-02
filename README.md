@@ -34,6 +34,7 @@ dependencies at all**.
 - [Streaming](#streaming-mitresthenexcelentsstream)
 - [Node filesystem helpers](#node-filesystem-helpers-mitresthenexcelentsnode)
 - [Entry points](#entry-points)
+- [Performance](#performance)
 - [Runtime support](#runtime-support)
 - [Coming from ExcelJS?](#coming-from-exceljs)
 - [FAQ](#faq)
@@ -257,6 +258,23 @@ await writeXlsxStream(rows()).pipeTo(nodeFileSystem.createWritable('big.xlsx'))
 Everything is named exports with `sideEffects: false`, so bundlers drop whatever you don't use —
 per-entry gzip budgets are asserted in CI on every commit.
 
+## Performance
+
+100,000 rows × 10 columns (5 strings + 5 numbers per row), Apple M4 Max, Node 24. Each case runs
+in a fresh process; peak RSS sampled in-process. Reproduce with `pnpm build && pnpm bench`.
+
+| Scenario | excelents | exceljs | excelents peak RSS | exceljs peak RSS |
+| --- | --- | --- | --- | --- |
+| buffered write | 7.3 s | 3.3 s | 991 MB | 1457 MB |
+| buffered read | 0.8 s | 1.5 s | 605 MB | 793 MB |
+| streaming write | 1.6 s | 0.7 s | 124 MB | 161 MB |
+| streaming read | 0.8 s | 1.4 s | 225 MB | 358 MB |
+
+Honest summary: reads are ~2× faster and every path uses meaningfully less memory, but ExcelJS
+currently wins on raw write throughput — write-path optimization is on the [roadmap](#roadmap).
+For large exports the streaming writer's bounded memory (124 MB vs ~1 GB buffered) matters more
+than the seconds.
+
 ## Runtime support
 
 | Runtime | Status |
@@ -353,6 +371,7 @@ changes. Pin a version and read release notes when bumping.
 ## Roadmap
 
 - Conditional formatting (write + read)
+- Write-path performance (currently slower than ExcelJS — see [Performance](#performance))
 - Reading embedded images back out of workbooks
 - An ExcelJS migration guide covering every mapping
 - v1.0: API freeze + packaging polish
