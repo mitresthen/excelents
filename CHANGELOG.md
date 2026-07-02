@@ -7,6 +7,13 @@ the full generated notes for each tag.
 
 ## [Unreleased]
 
+### Fixed
+
+- `readXlsx` and `readXlsxRows` now honor `<workbookPr date1904="1"/>`: dates in workbooks
+  saved with the legacy Mac 1904 date system no longer read back ~4 years off. Writes still
+  emit the standard 1900 system — since the model stores real `Date` objects, round-tripping
+  a 1904 workbook preserves the instants while normalizing the file to 1900.
+
 ## [1.0.0] — 2026-07-02
 
 First stable release: the public API is now covered by semver.

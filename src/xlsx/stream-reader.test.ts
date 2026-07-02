@@ -122,3 +122,11 @@ test('readXlsxRows on an empty sheet yields no rows', async () => {
   const bytes = await readableToBytes(writeXlsxStream([], { sheet: 'S' }))
   expect(await collect(readXlsxRows(bytes))).toEqual([])
 })
+
+test('readXlsxRows honors the 1904 date system', async () => {
+  // 1904.xlsx sets <workbookPr date1904="1"/>; B4 is serial 0 = 1904-01-01.
+  const path = listFixtures().find((p) => p.endsWith('1904.xlsx'))!
+  const rows = await collect(readXlsxRows(await parseFixture(path)))
+  const row4 = rows.find((r) => r.rowNumber === 4)!
+  expect(row4.cells[1]).toEqual(new Date(Date.UTC(1904, 0, 1)))
+})
