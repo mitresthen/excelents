@@ -1,6 +1,6 @@
 {
   "name": "@mitresthen/excelents",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Universal, tree-shakeable, TypeScript-first spreadsheet (xlsx/csv) library.",
   "homepage": "https://github.com/mitresthen/excelents#readme",
   "bugs": "https://github.com/mitresthen/excelents/issues",
