@@ -63,7 +63,8 @@
     "lint:fix": "oxlint --type-aware --fix",
     "format": "oxfmt --check .",
     "format:fix": "oxfmt .",
-    "test": "vitest run",
+    "test": "vitest run --project node",
+    "test:browser": "vitest run --project browser",
     "size": "node scripts/size.mjs",
     "smoke": "node scripts/smoke.mjs",
     "version": "node scripts/sync-version.mjs && git add src/index.ts",
@@ -72,7 +73,7 @@
   "devDependencies": {
     "@arethetypeswrong/cli": "0.18.4",
     "@types/node": "^22.0.0",
-    "@vitest/browser": "4.1.9",
+    "@vitest/browser-playwright": "^4.1.9",
     "exceljs": "4.4.0",
     "oxfmt": "0.56.0",
     "oxlint": "1.71.0",

@@ -1,3 +1,4 @@
+import { playwright } from '@vitest/browser-playwright'
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
@@ -11,15 +12,18 @@ export default defineConfig({
           exclude: ['test/browser/**'],
         },
       },
-      // Browser project (enabled in SP-1 when substrate browser tests exist):
-      // {
-      //   test: {
-      //     name: 'browser',
-      //     include: ['test/browser/**/*.test.ts'],
-      //     browser: { enabled: true, provider: 'playwright', headless: true,
-      //       instances: [{ browser: 'chromium' }] },
-      //   },
-      // },
+      {
+        test: {
+          name: 'browser',
+          include: ['test/browser/**/*.test.ts'],
+          browser: {
+            enabled: true,
+            provider: playwright(),
+            headless: true,
+            instances: [{ browser: 'chromium' }],
+          },
+        },
+      },
     ],
   },
 })

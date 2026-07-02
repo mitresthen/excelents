@@ -119,6 +119,10 @@ ws.freeze({ rows: 1, cols: 1 }) // frozen panes
 ws.setAutoFilter('A1:F1')       // autoFilter over the header range
 ```
 
+Note: `freeze`, `setAutoFilter`, alignment `indent`, and images are **write-side** features — they
+serialize into the file, but `readXlsx` does not currently parse them back (see
+[Roadmap](#roadmap)). Merges, sizing, values, and the rest of the styles round-trip fully.
+
 ### Images
 
 Embed PNG/JPEG/GIF images (write-side), anchored to a cell and sized in pixels:
@@ -258,7 +262,7 @@ per-entry gzip budgets are asserted in CI on every commit.
 | Runtime | Status |
 | --- | --- |
 | Node.js ≥ 24 | ✅ Tested in CI |
-| Evergreen browsers | ✅ Supported — the core is pure web-standard code (a browser CI suite is planned) |
+| Evergreen browsers | ✅ Tested in CI (Vitest browser mode, real Chromium) |
 | Deno / Bun / edge (Workers, etc.) | ✅ Expected to work — the core uses only web-standard APIs |
 
 The only platform capabilities required are `CompressionStream`/`DecompressionStream` with
@@ -276,9 +280,10 @@ against ExcelJS itself.
 ### What's supported
 
 Cell values (strings, numbers, booleans, dates, formulas with cached results, rich text,
-hyperlinks) · styling (fonts, fills, borders, alignment incl. indent, number formats) · merged
-cells · row heights & column widths · frozen panes · autoFilter · tables · data validation ·
-defined names · embedded images (write) · 1900/1904 date systems · CSV · streaming read/write.
+hyperlinks) · styling (fonts, fills, borders, alignment, number formats) · merged cells · row
+heights & column widths · tables · data validation · defined names · frozen panes, autoFilter,
+alignment indent & embedded images (write-side) · 1900/1904 date systems · CSV · streaming
+read/write.
 
 ### What was dropped from the fork
 
@@ -293,8 +298,9 @@ These ExcelJS features were **deliberately cut** and are not planned:
 | Worksheet/workbook protection | Not carried over |
 | CommonJS build | ESM-only since v0.2.0 |
 
-Still on the roadmap (in scope, not yet shipped): **conditional formatting** and reading images
-back out of workbooks (`addImage`/`placeImage` are currently write-side only).
+Still on the roadmap (in scope, not yet shipped): **conditional formatting**, and parsing the
+write-side features (images, frozen panes, autoFilter, alignment indent) back out of workbooks
+on read.
 
 ### API mapping
 
@@ -366,7 +372,8 @@ pnpm test        # vitest (node + browser projects), incl. the conformance suite
 | `pnpm typecheck` | `tsc --noEmit` |
 | `pnpm lint` / `pnpm lint:fix` | oxlint (type-aware) |
 | `pnpm format` / `pnpm format:fix` | oxfmt |
-| `pnpm test` | Vitest, including the ExcelJS conformance oracle |
+| `pnpm test` | Vitest (node project), including the ExcelJS conformance oracle |
+| `pnpm test:browser` | The public-API suite in real Chromium (needs `pnpm exec playwright install chromium` once) |
 | `pnpm size` | Assert per-entry gzip budgets (`size-budget.json`) |
 | `pnpm smoke` | Pack the tarball and import it from a scratch project |
 
