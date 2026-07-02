@@ -244,8 +244,9 @@ Excel-friendly UTF-8 BOM.
 - **Formula cells:** neither library evaluates formulas. excelents writes the cached `result` if
   you provide one; omit it and Excel shows the value after recalculation.
 - **Error cells** (`#N/A`, `#DIV/0!`) come back as empty cells, not error values.
-- **Dates** use the standard 1900 date system on both read and write. The legacy Mac `date1904`
-  workbook flag is not honored yet — dates in such files read back offset by ~4 years.
+- **Dates** are honored under both date systems on read (`date1904` workbooks included); writes
+  always emit the standard 1900 system. Round-tripping a 1904 workbook keeps every date the same
+  instant while normalizing the file to 1900.
 - **Number inference in CSV:** `readCsv` only converts strings that round-trip losslessly
   (`parseNumbers: false` to disable), so ID-like strings such as `007` stay strings.
 - **Streaming rows are arrays indexed from column A** (`cells[0]` = A), while the model API is

@@ -12,6 +12,8 @@ export interface ReadContext {
   readonly cellStyles: CellStyle[]
   /** rId -> external hyperlink URL, from the worksheet's own relationships part. */
   readonly hyperlinkTargets: Map<string, string>
+  /** Serial dates count from the 1904 epoch (`<workbookPr date1904="1"/>`). */
+  readonly date1904?: boolean
 }
 
 /** Narrow a raw dataValidation type attribute to the model union (no cast). */
@@ -126,7 +128,7 @@ export function readWorksheetInto(ws: Worksheet, xml: string, ctx: ReadContext):
       // A numeric cell whose format is a date renders back as a Date.
       cell.value =
         style?.numberFormat !== undefined && isDateFormat(style.numberFormat)
-          ? serialToDate(Number(v))
+          ? serialToDate(Number(v), { date1904: ctx.date1904 === true })
           : Number(v)
     }
   }

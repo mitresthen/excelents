@@ -136,6 +136,7 @@ function parseRow(
   xml: string,
   sharedStrings: readonly SharedStringValue[],
   cellStyles: readonly CellStyle[],
+  date1904: boolean,
 ): { rowNumber: number; cells: CellValue[] } {
   let rowNumber = 0
   const cellByCol = new Map<number, CellValue>()
@@ -178,7 +179,7 @@ function parseRow(
     } else if (v !== undefined) {
       value =
         style?.numberFormat !== undefined && isDateFormat(style.numberFormat)
-          ? serialToDate(Number(v))
+          ? serialToDate(Number(v), { date1904 })
           : Number(v)
     }
     if (value !== undefined) {
@@ -281,7 +282,7 @@ export async function* readXlsxRows(source: XlsxRowSource): AsyncGenerator<XlsxR
     const entry = byName.get(sheet.path)
     if (entry === undefined) continue
     for await (const rowXml of extractRowXml(inflateText(entry))) {
-      const { rowNumber, cells } = parseRow(rowXml, sharedStrings, cellStyles)
+      const { rowNumber, cells } = parseRow(rowXml, sharedStrings, cellStyles, parts.date1904)
       yield { sheet: sheet.name, rowNumber, cells }
     }
   }

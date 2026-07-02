@@ -382,7 +382,6 @@ Roadmap features (conditional formatting, write-side read-back) arrive as minors
 
 - Conditional formatting (write + read)
 - Write-path performance (currently slower than ExcelJS — see [Performance](#performance))
-- Honor the legacy `date1904` workbook flag on read
 - Parse the write-side features (images, frozen panes, autoFilter, indent) back out on read
 
 ## Contributing

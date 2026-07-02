@@ -10,6 +10,8 @@ export interface WorkbookParts {
   readonly stylesPath: string | undefined
   /** Defined names in document order; `localSheetId` is set for sheet-scoped names. */
   readonly definedNames: ReadonlyArray<{ name: string; formula: string; localSheetId?: number }>
+  /** True when `<workbookPr date1904="1"/>` — serial dates count from the 1904 epoch. */
+  readonly date1904: boolean
 }
 
 const OFFICE_DOC = '/officeDocument'
@@ -35,9 +37,14 @@ export function readWorkbookParts(pkg: OpcPackage): WorkbookParts {
   let dnText = ''
   let inDefinedName = false
 
+  let date1904 = false
+
   const xml = new TextDecoder().decode(pkg.getPart(workbookPath) ?? new Uint8Array())
   for (const tok of tokenize(xml)) {
-    if (tok.type === 'open' && tok.name === 'sheet') {
+    if (tok.type === 'open' && tok.name === 'workbookPr') {
+      const flag = tok.attributes['date1904']
+      date1904 = flag === '1' || flag === 'true'
+    } else if (tok.type === 'open' && tok.name === 'sheet') {
       const name = tok.attributes['name']
       const rid = tok.attributes['r:id']
       const target = rid !== undefined ? byId.get(rid)?.target : undefined
@@ -63,5 +70,5 @@ export function readWorkbookParts(pkg: OpcPackage): WorkbookParts {
   }
   const sharedStringsPath = rels.find((r) => r.type.endsWith(SHARED_STRINGS))?.target
   const stylesPath = rels.find((r) => r.type.endsWith(STYLES))?.target
-  return { sheets, sharedStringsPath, stylesPath, definedNames }
+  return { sheets, sharedStringsPath, stylesPath, definedNames, date1904 }
 }

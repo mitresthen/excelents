@@ -39,6 +39,7 @@ export async function readXlsx(bytes: Uint8Array): Promise<Workbook> {
       sharedStrings,
       cellStyles,
       hyperlinkTargets,
+      date1904: parts.date1904,
     })
     // Resolve <tablePart> rIds to their table parts and reconstruct each table.
     const relById = new Map(sheetRels.map((rel) => [rel.id, rel]))

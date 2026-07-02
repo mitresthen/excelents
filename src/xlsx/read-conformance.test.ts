@@ -82,6 +82,14 @@ test('the SP-5 readers fire on real fixtures (not just synthetic round-trips)', 
   expect(tables.every((t) => t.name !== '' && t.ref !== '' && t.columns.length > 0)).toBe(true)
 })
 
+test('the 1904 date-system fixture reads dates on the 1904 epoch', async () => {
+  // 1904.xlsx sets <workbookPr date1904="1"/>; B4 is serial 0 = 1904-01-01
+  // (confirmed against the exceljs oracle). On the 1900 epoch it would read
+  // as 1900-01-01 — four years off.
+  const wb = await byName('1904.xlsx')
+  expect(wb.sheets[0]!.cell('B4').value).toEqual(new Date(Date.UTC(1904, 0, 1)))
+})
+
 test('sheet-scoped defined names in a real fixture keep their localSheetId', async () => {
   // test-issue-877.xlsx has 4 names with a localSheetId (3 sharing a label with a global
   // twin). They must stay scoped, not collapse to colliding global names.
